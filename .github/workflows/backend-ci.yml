@@ -16,6 +16,11 @@ on:
       - 'settings.gradle'
       - 'gradle/**'
       - '.github/workflows/backend-ci.yml'
+      -
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
 
 # ============================================================
 # 동시성 제어: 같은 PR에 새 커밋이 push되면 이전 실행 취소
