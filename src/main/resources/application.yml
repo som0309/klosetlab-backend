@@ -18,3 +18,12 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: 3600000      # 1시간 (ms)
   refresh-token-expiration: 604800000   # 1주일 (ms)
+
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}
+  client-secret: ${KAKAO_CLIENT_SECRET}
+  redirect-uri: ${KAKAO_REDIRECT_URI}
+  token-uri: https://kauth.kakao.com/oauth/token
+  jwks-uri: https://kauth.kakao.com/.well-known/jwks.json
+  issuer: https://kauth.kakao.com
