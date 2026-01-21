@@ -1,9 +1,10 @@
 name: Backend CI
 
 # ============================================================
-# 트리거 설정: PR이 생성/업데이트될 때 자동 실행
+# 트리거 설정: PR이 생성/업데이트될 때 + 브랜치 푸시 시 자동 실행
 # ============================================================
 on:
+  # PR 이벤트 (코드 검증용)
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -17,16 +18,28 @@ on:
       - 'gradle/**'
       - '.github/workflows/backend-ci.yml'
 
+  # Push 이벤트 (CD 트리거용)
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle/**'
+      - '.github/workflows/backend-ci.yml'
+
 permissions:
   contents: read
   checks: write
   pull-requests: write
 
 # ============================================================
-# 동시성 제어: 같은 PR에 새 커밋이 push되면 이전 실행 취소
+# 동시성 제어: 같은 PR 또는 브랜치에서 새 실행 시 이전 실행 취소
 # ============================================================
 concurrency:
-  group: ci-${{ github.event.pull_request.number }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 # ============================================================
@@ -174,24 +187,24 @@ jobs:
           retention-days: 7
 
       # ------------------------------------------------------
-      # 10. JAR 파일 저장 (main PR)
+      # 10. JAR 파일 저장 (main PR/Push)
       # ------------------------------------------------------
       - name: 📦 Upload build artifact (main)
-        if: github.base_ref == 'main' && success()
+        if: (github.base_ref == 'main' || github.ref_name == 'main') && success()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-jar-main-${{ github.event.pull_request.head.sha }}
+          name: backend-jar-main-${{ github.event.pull_request.head.sha || github.sha }}
           path: build/libs/*.jar
           retention-days: 90
 
       # ------------------------------------------------------
-      # 11. JAR 파일 저장 (dev PR)
+      # 11. JAR 파일 저장 (dev PR/Push)
       # ------------------------------------------------------
       - name: 📦 Upload build artifact (dev)
-        if: github.base_ref == 'dev' && success()
+        if: (github.base_ref == 'dev' || github.ref_name == 'dev') && success()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-jar-dev-${{ github.event.pull_request.head.sha }}
+          name: backend-jar-dev-${{ github.event.pull_request.head.sha || github.sha }}
           path: build/libs/*.jar
           retention-days: 7
 
@@ -205,13 +218,13 @@ jobs:
           cat > build-info/metadata.json <<EOF
           {
             "buildTime": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
-            "commitSha": "${{ github.event.pull_request.head.sha }}",
-            "commitShort": "$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)",
-            "branch": "${{ github.head_ref }}",
-            "baseBranch": "${{ github.base_ref }}",
-            "prNumber": "${{ github.event.pull_request.number }}",
-            "prTitle": "${{ github.event.pull_request.title }}",
-            "author": "${{ github.event.pull_request.user.login }}",
+            "commitSha": "${{ github.event.pull_request.head.sha || github.sha }}",
+            "commitShort": "$(echo ${{ github.event.pull_request.head.sha || github.sha }} | cut -c1-7)",
+            "branch": "${{ github.head_ref || github.ref_name }}",
+            "baseBranch": "${{ github.base_ref || github.ref_name }}",
+            "prNumber": "${{ github.event.pull_request.number || 'N/A' }}",
+            "prTitle": "${{ github.event.pull_request.title || 'Direct Push' }}",
+            "author": "${{ github.event.pull_request.user.login || github.actor }}",
             "coverage": "${{ steps.coverage.outputs.coverage }}"
           }
           EOF
@@ -221,7 +234,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: build-metadata-${{ github.event.pull_request.head.sha }}
+          name: build-metadata-${{ github.event.pull_request.head.sha || github.sha }}
           path: build-info/metadata.json
           retention-days: 30
 
@@ -303,10 +316,10 @@ jobs:
             }
 
       # ------------------------------------------------------
-      # 14. Discord 알림 - 성공
+      # 14. Discord 알림 - 성공 (PR only)
       # ------------------------------------------------------
       - name: 📢 Send Discord notification on success
-        if: success()
+        if: success() && github.event_name == 'pull_request'
         uses: tsickert/discord-webhook@v5.3.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -327,10 +340,10 @@ jobs:
           embed-timestamp: ${{ github.event.pull_request.updated_at }}
 
       # ------------------------------------------------------
-      # 15. Discord 알림 - 실패
+      # 15. Discord 알림 - 실패 (PR only)
       # ------------------------------------------------------
       - name: 📢 Send Discord notification on failure
-        if: failure()
+        if: failure() && github.event_name == 'pull_request'
         uses: tsickert/discord-webhook@v5.3.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
