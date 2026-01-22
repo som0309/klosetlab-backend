@@ -36,7 +36,6 @@ public class S3StorageService {
         PutObjectRequest objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(objectKey)
-                .contentType(fileType.getMimeType())
                 .build();
 
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(
