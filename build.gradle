@@ -45,6 +45,8 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // REDIS
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation "software.amazon.awssdk:s3:2.20.100"
 }
 
