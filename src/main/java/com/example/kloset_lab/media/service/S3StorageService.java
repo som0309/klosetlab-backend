@@ -33,10 +33,8 @@ public class S3StorageService {
 
         String objectKey = generateObjectKey(fileName, fileType);
 
-        PutObjectRequest objectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(objectKey)
-                .build();
+        PutObjectRequest objectRequest =
+                PutObjectRequest.builder().bucket(bucketName).key(objectKey).build();
 
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(
                 r -> r.signatureDuration(Duration.ofMinutes(10)).putObjectRequest(objectRequest));
