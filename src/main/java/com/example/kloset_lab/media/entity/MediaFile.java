@@ -5,6 +5,7 @@ import com.example.kloset_lab.user.entity.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -26,7 +27,7 @@ public class MediaFile extends BaseTimeEntity {
     @Column(name = "purpose", nullable = false, columnDefinition = "varchar(10)")
     private Purpose purpose;
 
-    @Column(name = "object_key", nullable = false)
+    @Column(name = "object_key", length = 100, nullable = false)
     private String objectKey;
 
     @Enumerated(EnumType.STRING)
@@ -42,4 +43,17 @@ public class MediaFile extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, columnDefinition = "varchar(10)")
     private FileStatus status = FileStatus.PENDING;
+
+    @Builder
+    private MediaFile(User user, Purpose purpose, String objectKey, FileType fileType) {
+        this.user = user;
+        this.purpose = purpose;
+        this.objectKey = objectKey;
+        this.fileType = fileType;
+    }
+
+    public void updateFileStatus() {
+        this.status = FileStatus.UPLOADED;
+        this.uploadedAt = LocalDateTime.now();
+    }
 }
