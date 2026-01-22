@@ -20,7 +20,7 @@ public class S3StorageService {
 
     private static final long MAX_IMAGE_SIZE_BYTES = 10L * 1024 * 1024;
 
-    @Value("${aws.s3.bucket}")
+    @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
 
     @Value("${cloud.aws.region.static}")
