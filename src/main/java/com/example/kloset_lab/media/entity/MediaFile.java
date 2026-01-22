@@ -24,21 +24,26 @@ public class MediaFile extends BaseTimeEntity {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "purpose", length = 10, nullable = false)
+
+    @Column(name = "purpose", nullable = false, columnDefinition = "varchar(10)")
     private Purpose purpose;
 
     @Column(name = "object_key", length = 100, nullable = false)
     private String objectKey;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", length = 10, nullable = false)
+    @Column(name = "type", nullable = false, columnDefinition = "varchar(10)")
     private FileType fileType;
+
+    @Column(name = "size", nullable = false)
+    private Long size;
 
     @Column(name = "uploaded_at")
     private LocalDateTime uploadedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 10, nullable = false)
+
+    @Column(name = "status", nullable = false, columnDefinition = "varchar(10)")
     private FileStatus status = FileStatus.PENDING;
 
     @Builder

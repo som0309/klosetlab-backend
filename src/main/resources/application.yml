@@ -28,3 +28,11 @@ cloud:
       static: ${S3_REGION}
     s3:
       bucket: ${S3_BUCKET_NAME}
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}
+  client-secret: ${KAKAO_CLIENT_SECRET}
+  redirect-uri: ${KAKAO_REDIRECT_URI}
+  token-uri: https://kauth.kakao.com/oauth/token
+  jwks-uri: https://kauth.kakao.com/.well-known/jwks.json
+  issuer: https://kauth.kakao.com
