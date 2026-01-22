@@ -1,7 +1,16 @@
 package com.example.kloset_lab.media.entity;
 
+import lombok.Getter;
+
+@Getter
 public enum Purpose {
-    FEED,
-    AI,
-    PROFILE
+    FEED(5),
+    PROFILE(1),
+    CLOTHES_TEMP(10);
+
+    private final int maxCount;
+
+    Purpose(int i) {
+        this.maxCount = i;
+    }
 }

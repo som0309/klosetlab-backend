@@ -27,7 +27,7 @@ public class MediaFile extends BaseTimeEntity {
     @Column(name = "purpose", length = 10, nullable = false)
     private Purpose purpose;
 
-    @Column(name = "object_key", length = 50, nullable = false)
+    @Column(name = "object_key", length = 100, nullable = false)
     private String objectKey;
 
     @Enumerated(EnumType.STRING)
@@ -42,18 +42,15 @@ public class MediaFile extends BaseTimeEntity {
     private FileStatus status = FileStatus.PENDING;
 
     @Builder
-    private MediaFile(
-            User user,
-            Purpose purpose,
-            String objectKey,
-            FileType fileType,
-            FileStatus status,
-            LocalDateTime uploadedAt) {
+    private MediaFile(User user, Purpose purpose, String objectKey, FileType fileType) {
         this.user = user;
         this.purpose = purpose;
         this.objectKey = objectKey;
         this.fileType = fileType;
-        this.status = status != null ? status : FileStatus.PENDING;
-        this.uploadedAt = uploadedAt;
+    }
+
+    public void updateFileStatus() {
+        this.status = FileStatus.UPLOADED;
+        this.uploadedAt = LocalDateTime.now();
     }
 }
