@@ -23,7 +23,7 @@ public class MediaController {
             @AuthenticationPrincipal Long userId, @RequestBody FileUploadRequest fileUploadRequest) {
 
         List<FileUploadResponse> fileUploadResponseList =
-                mediaService.requestFileUpload(userId, fileUploadRequest.getPurpose(), fileUploadRequest.getFiles());
+                mediaService.requestFileUpload(userId, fileUploadRequest.purpose(), fileUploadRequest.files());
 
         return ApiResponses.ok(Message.PRESIGNED_URL_GENERATED, fileUploadResponseList);
     }
