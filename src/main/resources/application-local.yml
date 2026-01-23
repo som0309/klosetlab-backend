@@ -28,3 +28,7 @@ kakao:
   token-uri: https://kauth.kakao.com/oauth/token
   jwks-uri: https://kauth.kakao.com/.well-known/jwks.json
   issuer: https://kauth.kakao.com
+
+ai:
+  api:
+    base-url: ${AI_API_BASE_URL:http://localhost:8080}
