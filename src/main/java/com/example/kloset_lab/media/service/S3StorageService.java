@@ -30,6 +30,7 @@ public class S3StorageService implements StorageService {
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
+
     @Override
     public PresignedUrlInfo generatePresignedUrl(String fileName, FileType fileType) {
         String objectKey = generateObjectKey(fileName, fileType);
@@ -45,6 +46,7 @@ public class S3StorageService implements StorageService {
                 .objectKey(objectKey)
                 .build();
     }
+
     @Override
     public void validateUpload(String objectKey, FileType expectedFileType) {
         try {
@@ -70,6 +72,7 @@ public class S3StorageService implements StorageService {
             throw new CustomException(ErrorCode.IMAGE_PROCESSING_ERROR);
         }
     }
+
     @Override
     public String getFullImageUrl(String objectKey) {
         return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + objectKey;

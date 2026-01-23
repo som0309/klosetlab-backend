@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Profile("!prod")
-public class MockStorageService implements StorageService{
+public class MockStorageService implements StorageService {
     @Override
     public PresignedUrlInfo generatePresignedUrl(String fileName, FileType fileType) {
         return PresignedUrlInfo.builder()
@@ -17,9 +17,7 @@ public class MockStorageService implements StorageService{
     }
 
     @Override
-    public void validateUpload(String objectKey, FileType expectedFileType) {
-
-    }
+    public void validateUpload(String objectKey, FileType expectedFileType) {}
 
     @Override
     public String getFullImageUrl(String objectKey) {
