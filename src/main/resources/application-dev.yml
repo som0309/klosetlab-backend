@@ -54,7 +54,7 @@ server:
     include-stacktrace: on_param
 
 jwt:
-  secret: ${JWT_SECRET:default-dev-secret-key-minimum-32-chars}
+  secret: ${JWT_SECRET:dev-jwt-secret-key-minimum-32-characters-long-for-development-use}
   access-token-expiration: 3600000
   refresh-token-expiration: 604800000
 
