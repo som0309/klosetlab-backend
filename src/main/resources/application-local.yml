@@ -31,4 +31,4 @@ kakao:
 
 ai:
   api:
-    base-url: ${AI_API_BASE_URL:http://localhost:8080}
+    base-url: http://localhost:8080
