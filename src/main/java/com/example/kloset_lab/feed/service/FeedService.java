@@ -117,6 +117,23 @@ public class FeedService {
     }
 
     /**
+     * 피드 삭제
+     *
+     * @param userId 현재 사용자 ID
+     * @param feedId 삭제할 피드 ID
+     */
+    @Transactional
+    public void deleteFeed(Long userId, Long feedId) {
+        Feed feed = feedRepository.findById(feedId).orElseThrow(() -> new CustomException(ErrorCode.FEED_NOT_FOUND));
+
+        if (!feed.getUser().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.FEED_DELETE_DENIED);
+        }
+
+        feed.softDelete();
+    }
+
+    /**
      * 피드 이미지 저장
      */
     private void saveFeedImages(Feed feed, List<MediaFile> mediaFiles, List<Long> fileIds) {

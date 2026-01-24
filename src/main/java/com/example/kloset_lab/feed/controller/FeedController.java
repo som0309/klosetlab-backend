@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -69,5 +70,19 @@ public class FeedController {
             @Valid @RequestBody FeedUpdateRequest request) {
         FeedDetailResponse response = feedService.updateFeed(userId, feedId, request);
         return ApiResponses.ok(Message.FEED_EDITED, response);
+    }
+
+    /**
+     * 피드 삭제 API
+     *
+     * @param userId 현재 로그인한 사용자 ID
+     * @param feedId 삭제할 피드 ID
+     * @return 삭제 성공 응답
+     */
+    @DeleteMapping("/{feedId}")
+    public ResponseEntity<ApiResponse<Void>> deleteFeed(
+            @AuthenticationPrincipal Long userId, @PathVariable Long feedId) {
+        feedService.deleteFeed(userId, feedId);
+        return ApiResponses.ok(Message.FEED_DELETED, null);
     }
 }
