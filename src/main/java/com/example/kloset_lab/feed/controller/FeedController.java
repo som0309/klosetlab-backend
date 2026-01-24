@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +38,20 @@ public class FeedController {
             @AuthenticationPrincipal Long userId, @Valid @RequestBody FeedCreateRequest request) {
         FeedDetailResponse response = feedService.createFeed(userId, request);
         return ApiResponses.created(Message.FEED_CREATED, response);
+    }
+
+    /**
+     * 피드 상세 조회 API
+     *
+     * @param userId 현재 로그인한 사용자 ID
+     * @param feedId 조회할 피드 ID
+     * @return 피드 상세 정보
+     */
+    @GetMapping("/{feedId}")
+    public ResponseEntity<ApiResponse<FeedDetailResponse>> getFeed(
+            @AuthenticationPrincipal Long userId, @PathVariable Long feedId) {
+        FeedDetailResponse response = feedService.getFeed(userId, feedId);
+        return ApiResponses.ok(Message.FEED_RETRIEVED, response);
     }
 
     /**

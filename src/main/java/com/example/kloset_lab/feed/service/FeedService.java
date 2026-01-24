@@ -74,6 +74,19 @@ public class FeedService {
     }
 
     /**
+     * 피드 상세 조회
+     *
+     * @param userId 현재 사용자 ID
+     * @param feedId 조회할 피드 ID
+     * @return 피드 상세 정보
+     */
+    public FeedDetailResponse getFeed(Long userId, Long feedId) {
+        Feed feed = feedRepository.findById(feedId).orElseThrow(() -> new CustomException(ErrorCode.FEED_NOT_FOUND));
+
+        return buildFeedDetailResponse(feed, userId);
+    }
+
+    /**
      * 피드 수정
      *
      * @param userId  현재 사용자 ID
