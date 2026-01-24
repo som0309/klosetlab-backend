@@ -5,6 +5,7 @@ import com.example.kloset_lab.clothes.service.ClothesValidationService;
 import com.example.kloset_lab.feed.dto.ClothesDto;
 import com.example.kloset_lab.feed.dto.FeedCreateRequest;
 import com.example.kloset_lab.feed.dto.FeedDetailResponse;
+import com.example.kloset_lab.feed.dto.FeedLikeUserItem;
 import com.example.kloset_lab.feed.dto.FeedListItem;
 import com.example.kloset_lab.feed.dto.FeedUpdateRequest;
 import com.example.kloset_lab.feed.dto.LikeResponse;
@@ -193,6 +194,56 @@ public class FeedService {
         return LikeResponse.builder()
                 .likeCount(feed.getLikeCount())
                 .isLiked(false)
+                .build();
+    }
+
+    /**
+     * 피드 좋아요 사용자 목록 조회
+     *
+     * @param feedId 피드 ID
+     * @param after  커서 (이전 페이지 마지막 좋아요 ID)
+     * @param limit  조회 개수
+     * @return 좋아요 사용자 목록 및 페이지 정보
+     */
+    public PagedResponse<FeedLikeUserItem> getLikedUsers(Long feedId, Long after, int limit) {
+        if (!feedRepository.existsById(feedId)) {
+            throw new CustomException(ErrorCode.FEED_NOT_FOUND);
+        }
+
+        Slice<FeedLike> likeSlice = feedLikeRepository.findByFeedIdWithCursor(feedId, after, PageRequest.of(0, limit));
+        List<FeedLike> likes = likeSlice.getContent();
+
+        List<Long> userIds = likes.stream().map(fl -> fl.getUser().getId()).toList();
+        Map<Long, UserProfile> userProfileMap = userProfileRepository.findByUserIdIn(userIds).stream()
+                .collect(Collectors.toMap(up -> up.getUser().getId(), Function.identity()));
+
+        List<FeedLikeUserItem> items = likes.stream()
+                .map(like -> buildFeedLikeUserItem(like, userProfileMap))
+                .toList();
+
+        Long nextCursor = likeSlice.hasNext() ? likes.getLast().getId() : null;
+        PageInfo pageInfo = new PageInfo(likeSlice.hasNext(), nextCursor);
+
+        return new PagedResponse<>(items, pageInfo);
+    }
+
+    /**
+     * 피드 좋아요 사용자 아이템 생성
+     */
+    private FeedLikeUserItem buildFeedLikeUserItem(FeedLike like, Map<Long, UserProfile> userProfileMap) {
+        User user = like.getUser();
+        UserProfile userProfile = Optional.ofNullable(userProfileMap.get(user.getId()))
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String profileImageUrl = Optional.ofNullable(userProfile.getProfileFile())
+                .map(pf -> mediaService.getFileFullUrl(List.of(pf.getId())).getFirst())
+                .orElse(null);
+
+        UserProfileDto userProfileDto = new UserProfileDto(user.getId(), profileImageUrl, userProfile.getNickname());
+
+        return FeedLikeUserItem.builder()
+                .userProfile(userProfileDto)
+                .isFollowing(false) // 팔로우 기능 미구현
                 .build();
     }
 

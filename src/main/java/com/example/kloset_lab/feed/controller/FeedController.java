@@ -2,6 +2,7 @@ package com.example.kloset_lab.feed.controller;
 
 import com.example.kloset_lab.feed.dto.FeedCreateRequest;
 import com.example.kloset_lab.feed.dto.FeedDetailResponse;
+import com.example.kloset_lab.feed.dto.FeedLikeUserItem;
 import com.example.kloset_lab.feed.dto.FeedListItem;
 import com.example.kloset_lab.feed.dto.FeedUpdateRequest;
 import com.example.kloset_lab.feed.dto.LikeResponse;
@@ -133,5 +134,22 @@ public class FeedController {
             @AuthenticationPrincipal Long userId, @PathVariable Long feedId) {
         LikeResponse response = feedService.unlikeFeed(userId, feedId);
         return ApiResponses.ok(Message.FEED_LIKE_CANCELLED, response);
+    }
+
+    /**
+     * 피드 좋아요 사용자 목록 조회 API
+     *
+     * @param feedId 피드 ID
+     * @param after  커서 (이전 페이지 마지막 좋아요 ID)
+     * @param limit  조회 개수
+     * @return 좋아요 사용자 목록 및 페이지 정보
+     */
+    @GetMapping("/{feedId}/likes")
+    public ResponseEntity<ApiResponse<PagedResponse<FeedLikeUserItem>>> getLikedUsers(
+            @PathVariable Long feedId,
+            @RequestParam(required = false) Long after,
+            @RequestParam(defaultValue = "20") int limit) {
+        PagedResponse<FeedLikeUserItem> response = feedService.getLikedUsers(feedId, after, limit);
+        return ApiResponses.ok(Message.FEED_LIKES_RETRIEVED, response);
     }
 }

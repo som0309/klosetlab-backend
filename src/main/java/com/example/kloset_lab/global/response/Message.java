@@ -37,7 +37,7 @@ public class Message {
     public static final String FEED_DELETED = "feed_deleted";
     public static final String FEED_RETRIEVED = "feed_retrieved";
     public static final String FEEDS_RETRIEVED = "feeds_retrieved";
-    public static final String FEED_LIKES_RETRIEVED = "feed_likes_retrieved";
+    public static final String FEED_LIKES_RETRIEVED = "feed_likes_list_retrieved";
     public static final String FEED_LIKED = "like_feed";
     public static final String FEED_LIKE_CANCELLED = "cancle_like_feed";
 
