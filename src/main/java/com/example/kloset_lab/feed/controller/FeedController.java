@@ -2,11 +2,13 @@ package com.example.kloset_lab.feed.controller;
 
 import com.example.kloset_lab.feed.dto.FeedCreateRequest;
 import com.example.kloset_lab.feed.dto.FeedDetailResponse;
+import com.example.kloset_lab.feed.dto.FeedListItem;
 import com.example.kloset_lab.feed.dto.FeedUpdateRequest;
 import com.example.kloset_lab.feed.service.FeedService;
 import com.example.kloset_lab.global.response.ApiResponse;
 import com.example.kloset_lab.global.response.ApiResponses;
 import com.example.kloset_lab.global.response.Message;
+import com.example.kloset_lab.global.response.PagedResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -39,6 +42,20 @@ public class FeedController {
             @AuthenticationPrincipal Long userId, @Valid @RequestBody FeedCreateRequest request) {
         FeedDetailResponse response = feedService.createFeed(userId, request);
         return ApiResponses.created(Message.FEED_CREATED, response);
+    }
+
+    /**
+     * 피드 홈 목록 조회 API
+     *
+     * @param after 커서 (이전 페이지 마지막 피드 ID)
+     * @param limit 조회 개수
+     * @return 피드 목록 및 페이지 정보
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<PagedResponse<FeedListItem>>> getFeeds(
+            @RequestParam(required = false) Long after, @RequestParam(defaultValue = "10") int limit) {
+        PagedResponse<FeedListItem> response = feedService.getFeeds(after, limit);
+        return ApiResponses.ok(Message.FEEDS_RETRIEVED, response);
     }
 
     /**

@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface FeedImageRepository extends JpaRepository<FeedImage, Long> {
 
     List<FeedImage> findByFeedIdOrderByDisplayOrderAsc(Long feedId);
+
+    List<FeedImage> findByFeedIdInAndPrimaryTrue(List<Long> feedIds);
 }

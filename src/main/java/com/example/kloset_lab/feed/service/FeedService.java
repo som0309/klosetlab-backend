@@ -5,6 +5,7 @@ import com.example.kloset_lab.clothes.service.ClothesValidationService;
 import com.example.kloset_lab.feed.dto.ClothesDto;
 import com.example.kloset_lab.feed.dto.FeedCreateRequest;
 import com.example.kloset_lab.feed.dto.FeedDetailResponse;
+import com.example.kloset_lab.feed.dto.FeedListItem;
 import com.example.kloset_lab.feed.dto.FeedUpdateRequest;
 import com.example.kloset_lab.feed.entity.Feed;
 import com.example.kloset_lab.feed.entity.FeedClothesMapping;
@@ -14,6 +15,8 @@ import com.example.kloset_lab.feed.repository.FeedImageRepository;
 import com.example.kloset_lab.feed.repository.FeedRepository;
 import com.example.kloset_lab.global.exception.CustomException;
 import com.example.kloset_lab.global.exception.ErrorCode;
+import com.example.kloset_lab.global.response.PageInfo;
+import com.example.kloset_lab.global.response.PagedResponse;
 import com.example.kloset_lab.media.entity.MediaFile;
 import com.example.kloset_lab.media.entity.Purpose;
 import com.example.kloset_lab.media.repository.MediaFileRepository;
@@ -25,8 +28,13 @@ import com.example.kloset_lab.user.repository.UserProfileRepository;
 import com.example.kloset_lab.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -131,6 +139,69 @@ public class FeedService {
         }
 
         feed.softDelete();
+    }
+
+    /**
+     * 피드 홈 목록 조회
+     *
+     * @param after 커서 (이전 페이지 마지막 피드 ID)
+     * @param limit 조회 개수
+     * @return 피드 목록 및 페이지 정보
+     */
+    public PagedResponse<FeedListItem> getFeeds(Long after, int limit) {
+        Slice<Feed> feedSlice = feedRepository.findByCursor(after, PageRequest.of(0, limit));
+        List<Feed> feeds = feedSlice.getContent();
+
+        List<Long> feedIds = feeds.stream().map(Feed::getId).toList();
+
+        Map<Long, FeedImage> primaryImageMap = feedImageRepository.findByFeedIdInAndPrimaryTrue(feedIds).stream()
+                .collect(Collectors.toMap(fi -> fi.getFeed().getId(), Function.identity()));
+
+        List<Long> userIds =
+                feeds.stream().map(f -> f.getUser().getId()).distinct().toList();
+        Map<Long, UserProfile> userProfileMap = userProfileRepository.findByUserIdIn(userIds).stream()
+                .collect(Collectors.toMap(up -> up.getUser().getId(), Function.identity()));
+
+        List<FeedListItem> items = feeds.stream()
+                .map(feed -> buildFeedListItem(feed, primaryImageMap, userProfileMap))
+                .toList();
+
+        Long nextCursor = feedSlice.hasNext() ? feeds.getLast().getId() : null;
+        PageInfo pageInfo = new PageInfo(feedSlice.hasNext(), nextCursor);
+
+        return new PagedResponse<>(items, pageInfo);
+    }
+
+    /**
+     * 피드 목록 아이템 생성
+     */
+    private FeedListItem buildFeedListItem(
+            Feed feed, Map<Long, FeedImage> primaryImageMap, Map<Long, UserProfile> userProfileMap) {
+
+        String primaryImageUrl = Optional.ofNullable(primaryImageMap.get(feed.getId()))
+                .map(fi -> mediaService
+                        .getFileFullUrl(List.of(fi.getFile().getId()))
+                        .getFirst())
+                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
+
+        UserProfile userProfile = Optional.ofNullable(
+                        userProfileMap.get(feed.getUser().getId()))
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        String profileImageUrl = Optional.ofNullable(userProfile.getProfileFile())
+                .map(pf -> mediaService.getFileFullUrl(List.of(pf.getId())).getFirst())
+                .orElse(null);
+
+        UserProfileDto userProfileDto =
+                new UserProfileDto(feed.getUser().getId(), profileImageUrl, userProfile.getNickname());
+
+        return FeedListItem.builder()
+                .feedId(feed.getId())
+                .primaryImageUrl(primaryImageUrl)
+                .likeCount(feed.getLikeCount())
+                .commentCount(feed.getCommentCount())
+                .userProfile(userProfileDto)
+                .isLiked(false) // feed 좋아요 개발 전까지 false 고정
+                .build();
     }
 
     /**
