@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface FeedClothesMappingRepository extends JpaRepository<FeedClothesMapping, Long> {
 
     List<FeedClothesMapping> findByFeedId(Long feedId);
+
+    void deleteByFeedId(Long feedId);
 }

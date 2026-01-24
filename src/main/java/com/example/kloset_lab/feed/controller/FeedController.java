@@ -2,6 +2,7 @@ package com.example.kloset_lab.feed.controller;
 
 import com.example.kloset_lab.feed.dto.FeedCreateRequest;
 import com.example.kloset_lab.feed.dto.FeedDetailResponse;
+import com.example.kloset_lab.feed.dto.FeedUpdateRequest;
 import com.example.kloset_lab.feed.service.FeedService;
 import com.example.kloset_lab.global.response.ApiResponse;
 import com.example.kloset_lab.global.response.ApiResponses;
@@ -10,6 +11,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,5 +37,22 @@ public class FeedController {
             @AuthenticationPrincipal Long userId, @Valid @RequestBody FeedCreateRequest request) {
         FeedDetailResponse response = feedService.createFeed(userId, request);
         return ApiResponses.created(Message.FEED_CREATED, response);
+    }
+
+    /**
+     * 피드 수정 API
+     *
+     * @param userId  현재 로그인한 사용자 ID
+     * @param feedId  수정할 피드 ID
+     * @param request 피드 수정 요청
+     * @return 수정된 피드 상세 정보
+     */
+    @PatchMapping("/{feedId}")
+    public ResponseEntity<ApiResponse<FeedDetailResponse>> updateFeed(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long feedId,
+            @Valid @RequestBody FeedUpdateRequest request) {
+        FeedDetailResponse response = feedService.updateFeed(userId, feedId, request);
+        return ApiResponses.ok(Message.FEED_EDITED, response);
     }
 }

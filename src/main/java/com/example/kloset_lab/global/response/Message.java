@@ -33,7 +33,7 @@ public class Message {
 
     // Feed
     public static final String FEED_CREATED = "feed_created";
-    public static final String FEED_UPDATED = "feed_updated";
+    public static final String FEED_EDITED = "feed_edited";
     public static final String FEED_DELETED = "feed_deleted";
     public static final String FEED_RETRIEVED = "feed_retrieved";
     public static final String FEEDS_RETRIEVED = "feeds_retrieved";

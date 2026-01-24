@@ -1,10 +1,11 @@
 package com.example.kloset_lab.feed.service;
 
 import com.example.kloset_lab.clothes.entity.Clothes;
-import com.example.kloset_lab.clothes.repository.ClothesRepository;
+import com.example.kloset_lab.clothes.service.ClothesValidationService;
 import com.example.kloset_lab.feed.dto.ClothesDto;
 import com.example.kloset_lab.feed.dto.FeedCreateRequest;
 import com.example.kloset_lab.feed.dto.FeedDetailResponse;
+import com.example.kloset_lab.feed.dto.FeedUpdateRequest;
 import com.example.kloset_lab.feed.entity.Feed;
 import com.example.kloset_lab.feed.entity.FeedClothesMapping;
 import com.example.kloset_lab.feed.entity.FeedImage;
@@ -40,7 +41,7 @@ public class FeedService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final MediaFileRepository mediaFileRepository;
-    private final ClothesRepository clothesRepository;
+    private final ClothesValidationService clothesValidationService;
     private final MediaService mediaService;
 
     /**
@@ -58,7 +59,7 @@ public class FeedService {
 
         List<MediaFile> mediaFiles = mediaFileRepository.findAllById(request.fileIds());
 
-        List<Clothes> clothesList = validateAndGetClothes(userId, request.clothesIds());
+        List<Clothes> clothesList = clothesValidationService.getVerifiedClothes(userId, request.clothesIds());
 
         Feed feed = feedRepository.save(
                 Feed.builder().user(user).content(request.content()).build());
@@ -73,26 +74,33 @@ public class FeedService {
     }
 
     /**
-     * 옷 매핑 정보 검증 및 조회
+     * 피드 수정
+     *
+     * @param userId  현재 사용자 ID
+     * @param feedId  수정할 피드 ID
+     * @param request 피드 수정 요청
+     * @return 수정된 피드 상세 정보
      */
-    private List<Clothes> validateAndGetClothes(Long userId, List<Long> clothesIds) {
-        if (clothesIds == null || clothesIds.isEmpty()) {
-            return List.of();
+    @Transactional
+    public FeedDetailResponse updateFeed(Long userId, Long feedId, FeedUpdateRequest request) {
+        Feed feed = feedRepository.findById(feedId).orElseThrow(() -> new CustomException(ErrorCode.FEED_NOT_FOUND));
+
+        if (!feed.getUser().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.FEED_EDIT_DENIED);
         }
 
-        List<Clothes> clothesList = clothesRepository.findAllById(clothesIds);
+        Optional.ofNullable(request.clothesIds()).ifPresent(clothesIds -> {
+            feedClothesMappingRepository.deleteByFeedId(feedId);
 
-        if (clothesList.size() != clothesIds.size()) {
-            throw new CustomException(ErrorCode.CLOTHES_NOT_FOUND);
-        }
-
-        for (Clothes clothes : clothesList) {
-            if (!clothes.getUser().getId().equals(userId)) {
-                throw new CustomException(ErrorCode.CLOTHES_ACCESS_DENIED);
+            if (!clothesIds.isEmpty()) {
+                List<Clothes> clothesList = clothesValidationService.getVerifiedClothes(userId, clothesIds);
+                saveFeedClothesMappings(feed, clothesList);
             }
-        }
+        });
 
-        return clothesList;
+        Optional.ofNullable(request.content()).ifPresent(feed::updateContent);
+
+        return buildFeedDetailResponse(feed, userId);
     }
 
     /**
