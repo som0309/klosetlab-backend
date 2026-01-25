@@ -225,7 +225,6 @@ public class CommentService {
                 .build();
     }
 
-
     /**
      * 댓글 조회 및 피드 소속 검증
      *
