@@ -33,13 +33,13 @@ public class Message {
 
     // Feed
     public static final String FEED_CREATED = "feed_created";
-    public static final String FEED_UPDATED = "feed_updated";
+    public static final String FEED_EDITED = "feed_edited";
     public static final String FEED_DELETED = "feed_deleted";
     public static final String FEED_RETRIEVED = "feed_retrieved";
     public static final String FEEDS_RETRIEVED = "feeds_retrieved";
-    public static final String FEED_LIKES_RETRIEVED = "feed_likes_retrieved";
-    public static final String FEED_LIKED = "feed_liked";
-    public static final String FEED_LIKE_CANCELLED = "feed_like_cancelled";
+    public static final String FEED_LIKES_RETRIEVED = "feed_likes_list_retrieved";
+    public static final String FEED_LIKED = "like_feed";
+    public static final String FEED_LIKE_CANCELLED = "cancle_like_feed";
 
     // Comment
     public static final String COMMENTS_RETRIEVED = "comments_retrieved";

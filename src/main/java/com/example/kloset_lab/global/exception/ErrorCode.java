@@ -30,6 +30,7 @@ public enum ErrorCode {
     CLOTHES_EDIT_DENIED(HttpStatus.FORBIDDEN, "clothes_edit_denied"),
     CLOTHES_DELETE_DENIED(HttpStatus.FORBIDDEN, "clothes_delete_denied"),
     CLOTHES_ACCESS_DENIED(HttpStatus.FORBIDDEN, "clothes_access_denied"),
+    FEED_EDIT_DENIED(HttpStatus.FORBIDDEN, "feed_edit_denied"),
     FEED_DELETE_DENIED(HttpStatus.FORBIDDEN, "feed_delete_denied"),
     COMMENT_EDIT_DENIED(HttpStatus.FORBIDDEN, "comment_edit_denied"),
     COMMENT_DELETE_DENIED(HttpStatus.FORBIDDEN, "comment_delete_denied"),
