@@ -291,21 +291,13 @@ public class FeedService {
         return new PagedResponse<>(items, pageInfo);
     }
 
-    public PagedResponse<FeedListItem> getFeedsByUserId(
-            Long currentUserId,
-            Long targetUserId,
-            Long after,
-            int limit) {
+    public PagedResponse<FeedListItem> getFeedsByUserId(Long currentUserId, Long targetUserId, Long after, int limit) {
 
-        if(!userRepository.existsById(targetUserId)){
+        if (!userRepository.existsById(targetUserId)) {
             throw new CustomException(ErrorCode.TARGET_USER_NOT_FOUND);
         }
 
-        Slice<Feed> feedSlice = feedRepository.findByUserIdAndCursor(
-                targetUserId,
-                after,
-                PageRequest.of(0, limit)
-        );
+        Slice<Feed> feedSlice = feedRepository.findByUserIdAndCursor(targetUserId, after, PageRequest.of(0, limit));
 
         List<Feed> feeds = feedSlice.getContent();
         List<Long> feedIds = feeds.stream().map(Feed::getId).toList();

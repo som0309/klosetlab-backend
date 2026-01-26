@@ -1,5 +1,7 @@
 package com.example.kloset_lab.user.controller;
 
+import static com.example.kloset_lab.global.constants.PaginationDefaults.FEED_LIST;
+
 import com.example.kloset_lab.feed.dto.FeedListItem;
 import com.example.kloset_lab.feed.service.FeedService;
 import com.example.kloset_lab.global.response.ApiResponse;
@@ -13,8 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import static com.example.kloset_lab.global.constants.PaginationDefaults.FEED_LIST;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -86,8 +86,7 @@ public class UserController {
             @RequestParam(required = false) Long after,
             @RequestParam(defaultValue = FEED_LIST) int limit) {
 
-        PagedResponse<FeedListItem> response =
-                feedService.getFeedsByUserId(currentUserId, userId, after, limit);
+        PagedResponse<FeedListItem> response = feedService.getFeedsByUserId(currentUserId, userId, after, limit);
         return ApiResponses.ok(Message.USER_FEEDS_RETRIEVED, response);
     }
 }

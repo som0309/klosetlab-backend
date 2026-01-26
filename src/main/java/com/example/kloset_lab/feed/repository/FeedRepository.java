@@ -27,16 +27,13 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
      * @param pageable 페이징 정보
      * @return 피드 Slice
      */
-    @Query("""
-            SELECT f FROM Feed f 
-            JOIN FETCH f.user 
-            WHERE f.user.id = :userId 
-              AND (:cursor IS NULL OR f.id < :cursor) 
+    @Query(
+            """
+            SELECT f FROM Feed f
+            JOIN FETCH f.user
+            WHERE f.user.id = :userId
+              AND (:cursor IS NULL OR f.id < :cursor)
             ORDER BY f.id DESC
             """)
-    Slice<Feed> findByUserIdAndCursor(
-            @Param("userId") Long userId,
-            @Param("cursor") Long cursor,
-            Pageable pageable
-    );
+    Slice<Feed> findByUserIdAndCursor(@Param("userId") Long userId, @Param("cursor") Long cursor, Pageable pageable);
 }
