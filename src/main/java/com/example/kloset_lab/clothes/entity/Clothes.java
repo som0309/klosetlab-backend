@@ -101,12 +101,24 @@ public class Clothes extends BaseEntity {
             Category category,
             List<String> colors,
             List<String> materials) {
-        if (name != null) this.clothesName = name;
-        if (brandName != null) this.brandName = brandName;
-        if (price != null) this.price = price;
-        if (size != null) this.size = size;
-        if (boughtDate != null) this.boughtDate = boughtDate;
-        if (category != null) this.category = category;
+        if (name != null) {
+            this.clothesName = name;
+        }
+        if (brandName != null) {
+            this.brandName = brandName;
+        }
+        if (price != null) {
+            this.price = price;
+        }
+        if (size != null) {
+            this.size = size;
+        }
+        if (boughtDate != null) {
+            this.boughtDate = boughtDate;
+        }
+        if (category != null) {
+            this.category = category;
+        }
         if (colors != null) {
             this.colors.clear();
             this.colors.addAll(colors);
