@@ -84,7 +84,7 @@ public class UserService {
         String profileImageUrl = Optional.ofNullable(userProfile.getProfileFile())
                 .map(MediaFile::getId)
                 .map(List::of)
-                .map(mediaService::getFileFullUrl)
+                .map(mediaService::getFileFullUrls)
                 .filter(list -> !list.isEmpty())
                 .map(List::getFirst)
                 .orElse(null);
@@ -141,7 +141,7 @@ public class UserService {
      */
     private UserProfileDto buildUserProfileDtoFromProfile(Long userId, UserProfile userProfile) {
         String profileImageUrl = Optional.ofNullable(userProfile.getProfileFile())
-                .map(pf -> mediaService.getFileFullUrl(List.of(pf.getId())).getFirst())
+                .map(pf -> mediaService.getFileFullUrls(List.of(pf.getId())).getFirst())
                 .orElse(null);
 
         return new UserProfileDto(userId, profileImageUrl, userProfile.getNickname());

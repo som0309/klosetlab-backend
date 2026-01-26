@@ -41,7 +41,7 @@ public class ClothesAnalysisService {
 
         mediaService.confirmFileUpload(currentUserId, Purpose.CLOTHES_TEMP, fileIds);
 
-        List<String> imageUrls = mediaService.getFileFullUrl(fileIds);
+        List<String> imageUrls = mediaService.getFileFullUrls(fileIds);
 
         // 어뷰징 체크
         ValidateResponse validateResponse = aiClient.validateImages(currentUserId, imageUrls);
@@ -115,9 +115,7 @@ public class ClothesAnalysisService {
     }
 
     private ClothesPollingResponse.TaskResult toTaskResult(TempClothesTask task) {
-        String imageUrl = task.getFileId() != null
-                ? mediaService.getFileFullUrl(List.of(task.getFileId())).get(0)
-                : null;
+        String imageUrl = task.getFileId() != null ? mediaService.getFileFullUrl(task.getFileId()) : null;
 
         ClothesPollingResponse.Analysis analysis = parseAnalysis(task.getAnalysis());
 
