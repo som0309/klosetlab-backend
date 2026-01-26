@@ -48,6 +48,10 @@ dependencies {
     // REDIS
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation "software.amazon.awssdk:s3:2.20.100"
+    
+    // ENV
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
 }
 
 spotless {
