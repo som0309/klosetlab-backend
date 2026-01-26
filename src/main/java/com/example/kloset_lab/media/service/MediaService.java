@@ -86,7 +86,7 @@ public class MediaService {
         mediaFileRepository.saveAll(mediaFileList);
     }
 
-    public List<String> getFileFullUrl(List<Long> fileIdList) {
+    public List<String> getFileFullUrls(List<Long> fileIdList) {
         List<MediaFile> mediaFiles = mediaFileRepository.findAllById(fileIdList);
 
         if (mediaFiles.size() != fileIdList.size()) {
@@ -103,6 +103,13 @@ public class MediaService {
                 .map(MediaFile::getObjectKey)
                 .map(storageService::getFullImageUrl)
                 .toList();
+    }
+
+    public String getFileFullUrl(Long fileId) {
+        MediaFile mediaFile =
+                mediaFileRepository.findById(fileId).orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
+
+        return storageService.getFullImageUrl(mediaFile.getObjectKey());
     }
 
     private void validateFileCount(Purpose purpose, int count) {

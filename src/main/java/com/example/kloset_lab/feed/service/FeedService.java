@@ -244,7 +244,7 @@ public class FeedService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         String profileImageUrl = Optional.ofNullable(userProfile.getProfileFile())
-                .map(pf -> mediaService.getFileFullUrl(List.of(pf.getId())).getFirst())
+                .map(pf -> mediaService.getFileFullUrls(List.of(pf.getId())).getFirst())
                 .orElse(null);
 
         UserProfileDto userProfileDto = new UserProfileDto(user.getId(), profileImageUrl, userProfile.getNickname());
@@ -302,7 +302,7 @@ public class FeedService {
 
         String primaryImageUrl = Optional.ofNullable(primaryImageMap.get(feed.getId()))
                 .map(fi -> mediaService
-                        .getFileFullUrl(List.of(fi.getFile().getId()))
+                        .getFileFullUrls(List.of(fi.getFile().getId()))
                         .getFirst())
                 .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
 
@@ -362,14 +362,14 @@ public class FeedService {
     private FeedDetailResponse buildFeedDetailResponse(Feed feed, Long currentUserId) {
         List<FeedImage> feedImages = feedImageRepository.findByFeedIdOrderByDisplayOrderAsc(feed.getId());
         List<Long> fileIds = feedImages.stream().map(fi -> fi.getFile().getId()).toList();
-        List<String> imageUrls = mediaService.getFileFullUrl(fileIds);
+        List<String> imageUrls = mediaService.getFileFullUrls(fileIds);
 
         List<FeedClothesMapping> mappings = feedClothesMappingRepository.findByFeedId(feed.getId());
         List<ClothesDto> clothesDtoList = mappings.stream()
                 .map(mapping -> {
                     Clothes clothes = mapping.getClothes();
                     String clothesImageUrl = mediaService
-                            .getFileFullUrl(List.of(clothes.getFile().getId()))
+                            .getFileFullUrls(List.of(clothes.getFile().getId()))
                             .getFirst();
                     return new ClothesDto(
                             clothes.getId(), clothesImageUrl, clothes.getClothesName(), clothes.getPrice());
