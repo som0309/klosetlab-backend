@@ -166,8 +166,7 @@ public class AiService {
     public TpoRequestHistoryResponse getRecentTpoRequests(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        List<TpoRequest> tpoRequests = tpoRequestRepository
-                .findByUserOrderByCreatedAtDesc(user, PageRequest.of(0, 3));
+        List<TpoRequest> tpoRequests = tpoRequestRepository.findByUserOrderByCreatedAtDesc(user, PageRequest.of(0, 3));
 
         List<TpoRequestHistoryResponse.RequestHistory> requestHistories = tpoRequests.stream()
                 .map(tpoRequest -> TpoRequestHistoryResponse.RequestHistory.builder()
