@@ -1,9 +1,7 @@
 package com.example.kloset_lab.ai.dto;
 
-import com.example.kloset_lab.global.ai.dto.OutfitResponse;
-import lombok.Builder;
-
 import java.util.List;
+import lombok.Builder;
 
 /**
  * TPO 코디 생성 결과 DTO
@@ -14,5 +12,5 @@ import java.util.List;
 @Builder
 public record TpoOutfitsResponse(String outfitSummary, List<OutfitItem> outfits) {
     @Builder
-    public record OutfitItem(Long outfitId, String outfitImageUrl, String aiComment, Long feedbackId) {}
+    public record OutfitItem(Long outfitId, String outfitImageUrl, String aiComment) {}
 }
