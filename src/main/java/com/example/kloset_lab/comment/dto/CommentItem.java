@@ -1,6 +1,7 @@
 package com.example.kloset_lab.comment.dto;
 
 import com.example.kloset_lab.user.dto.UserProfileDto;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
 import lombok.Builder;
 
@@ -16,6 +17,7 @@ import lombok.Builder;
  * @param isOwner 현재 사용자가 작성자인지 여부
  */
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record CommentItem(
         Long commentId,
         String content,
@@ -23,4 +25,5 @@ public record CommentItem(
         UserProfileDto userProfile,
         LocalDateTime modifiedAt,
         boolean isLiked,
-        boolean isOwner) {}
+        boolean isOwner,
+        ReplyInfo replyInfo) {}
