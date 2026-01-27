@@ -4,6 +4,7 @@ import com.example.kloset_lab.auth.infrastructure.kakao.config.KakaoProperties;
 import com.example.kloset_lab.global.security.filter.JwtAuthenticationFilter;
 import com.example.kloset_lab.global.security.filter.exceptionHandler.CustomAccessDeniedHandler;
 import com.example.kloset_lab.global.security.filter.exceptionHandler.CustomAuthenticationEntryPoint;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,9 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +32,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // CORS 설정
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 // CSRF 비활성화 (JWT 사용 시 불필요)
                 .csrf(AbstractHttpConfigurer::disable)
 
@@ -44,7 +51,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**")
                         .permitAll()
                         // 회원가입 추가 정보 입력 API (REGISTRATION 토큰 필요 - 컨트롤러에서 TokenType 검증)
-                        .requestMatchers("/api/v1/users")
+                        .requestMatchers("/api/v1/users", "/api/v1/users/validation")
+                        .permitAll()
+                        // presigend-url 발급
+                        .requestMatchers("/api/v1/presigned-url")
                         .permitAll()
                         // 그 외 API는 인증 필요
                         .anyRequest()
@@ -59,5 +69,34 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 허용할 origin 설정
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:3000", // 개발 환경
+                "http://localhost:5173" // Vite 기본 포트
+                ));
+
+        // 허용할 HTTP 메서드
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+
+        // 허용할 헤더
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // 인증 정보 포함 허용 (Authorization 헤더 등)
+        configuration.setAllowCredentials(true);
+
+        // preflight 요청 캐시 시간 (1시간)
+        configuration.setMaxAge(3600L);
+
+        // 모든 경로에 대해 위 설정 적용
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
     }
 }

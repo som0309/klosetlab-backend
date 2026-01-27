@@ -14,6 +14,10 @@ public class Message {
     public static final String USER_CREATED = "user_created";
     public static final String NICKNAME_CHECKED_UNIQUE = "nickname_checked_unique";
     public static final String NICKNAME_CHECKED_DUPLICATE = "nickname_checked_duplicate";
+    public static final String BIRTH_DATE_VALID = "birth_date_valid";
+    public static final String BIRTH_DATE_INVALID_FORMAT = "birth_date_invalid_format";
+    public static final String BIRTH_DATE_FUTURE = "birth_date_future";
+    public static final String BIRTH_DATE_TOO_OLD = "birth_date_too_old";
     public static final String PROFILE_IMAGE_UPDATED = "profile_image_updated";
     public static final String PROFILE_IMAGE_DELETED = "profile_image_deleted";
     public static final String NICKNAME_UPDATED = "nickname_updated";
@@ -33,21 +37,21 @@ public class Message {
 
     // Feed
     public static final String FEED_CREATED = "feed_created";
-    public static final String FEED_UPDATED = "feed_updated";
+    public static final String FEED_EDITED = "feed_edited";
     public static final String FEED_DELETED = "feed_deleted";
     public static final String FEED_RETRIEVED = "feed_retrieved";
     public static final String FEEDS_RETRIEVED = "feeds_retrieved";
-    public static final String FEED_LIKES_RETRIEVED = "feed_likes_retrieved";
-    public static final String FEED_LIKED = "feed_liked";
-    public static final String FEED_LIKE_CANCELLED = "feed_like_cancelled";
+    public static final String FEED_LIKES_RETRIEVED = "feed_likes_list_retrieved";
+    public static final String FEED_LIKED = "like_feed";
+    public static final String FEED_LIKE_CANCELLED = "cancle_like_feed";
 
     // Comment
     public static final String COMMENTS_RETRIEVED = "comments_retrieved";
     public static final String COMMENT_CREATED = "comment_created";
     public static final String COMMENT_UPDATED = "comment_updated";
     public static final String COMMENT_DELETED = "comment_deleted";
-    public static final String COMMENT_LIKE_CREATED = "comment_like_created";
-    public static final String COMMENT_LIKE_DELETED = "comment_like_deleted";
+    public static final String COMMENT_LIKED = "like_comment";
+    public static final String COMMENT_LIKE_CANCELLED = "cancle_like_comment";
 
     // TPO
     public static final String RECENT_TPO_REQUESTS_RETRIEVED = "recent_tpo_requests_retrieved";

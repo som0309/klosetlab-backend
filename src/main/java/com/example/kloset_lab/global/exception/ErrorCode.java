@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     // 400 Bad Request
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "invalid_request"),
+    REPLY_TO_REPLY_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "reply_to_reply_not_allowed"),
     INVALID_NICKNAME(HttpStatus.BAD_REQUEST, "invalid_nickname"),
     MAXIMUM_10_FILES_ALLOWED(HttpStatus.BAD_REQUEST, "maximum_10_files_allowed"),
     MINIMUM_1_FILE_ALLOWED(HttpStatus.BAD_REQUEST, "minimum_1_file_allowed"),
@@ -30,23 +31,26 @@ public enum ErrorCode {
     CLOTHES_EDIT_DENIED(HttpStatus.FORBIDDEN, "clothes_edit_denied"),
     CLOTHES_DELETE_DENIED(HttpStatus.FORBIDDEN, "clothes_delete_denied"),
     CLOTHES_ACCESS_DENIED(HttpStatus.FORBIDDEN, "clothes_access_denied"),
+    FEED_EDIT_DENIED(HttpStatus.FORBIDDEN, "feed_edit_denied"),
     FEED_DELETE_DENIED(HttpStatus.FORBIDDEN, "feed_delete_denied"),
     COMMENT_EDIT_DENIED(HttpStatus.FORBIDDEN, "comment_edit_denied"),
     COMMENT_DELETE_DENIED(HttpStatus.FORBIDDEN, "comment_delete_denied"),
     TPO_RESULT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "tpo_result_access_denied"),
     SHOP_RESULT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "shop_result_access_denied"),
+    CLOTHES_ANALYSIS_RESULT_DENIED(HttpStatus.FORBIDDEN, "clothes_analysis_result_denied"),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "user_not_found"),
     TARGET_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "target_user_not_found"),
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "file_not_found"),
-    TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "task_not_found"),
+    CLOTHES_ANALYSIS_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "clothes_analysis_result_found"),
     CLOTHES_NOT_FOUND(HttpStatus.NOT_FOUND, "clothes_not_found"),
     CLOTHES_DETAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "clothes_detail_not_found"),
     FEED_NOT_FOUND(HttpStatus.NOT_FOUND, "feed_not_found"),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "comment_not_found"),
     PARENT_COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "parent_comment_not_found"),
     OUTFIT_NOT_FOUND(HttpStatus.NOT_FOUND, "outfit_not_found"),
+    TPO_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "tpo_result_not_found"),
 
     // 409 Conflict
     EXISTING_NICKNAME(HttpStatus.CONFLICT, "existing_nickname"),

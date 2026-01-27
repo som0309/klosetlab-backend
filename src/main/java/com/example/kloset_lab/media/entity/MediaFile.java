@@ -24,7 +24,7 @@ public class MediaFile extends BaseTimeEntity {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "purpose", nullable = false, columnDefinition = "varchar(10)")
+    @Column(name = "purpose", nullable = false, columnDefinition = "varchar(20)")
     private Purpose purpose;
 
     @Column(name = "object_key", length = 100, nullable = false)
@@ -33,9 +33,6 @@ public class MediaFile extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, columnDefinition = "varchar(10)")
     private FileType fileType;
-
-    @Column(name = "size", nullable = false)
-    private Long size;
 
     @Column(name = "uploaded_at")
     private LocalDateTime uploadedAt;
