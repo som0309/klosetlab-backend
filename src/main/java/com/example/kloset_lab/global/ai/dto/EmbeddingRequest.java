@@ -5,10 +5,4 @@ import lombok.Builder;
 
 @Builder
 public record EmbeddingRequest(
-        Long userId,
-        Long clothesId,
-        String imageUrl,
-        MajorFeature major,
-        @JsonRawValue
-        String extra
-) { }
+        Long userId, Long clothesId, String imageUrl, MajorFeature major, @JsonRawValue String extra) {}

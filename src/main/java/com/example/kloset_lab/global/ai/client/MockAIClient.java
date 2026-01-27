@@ -1,13 +1,10 @@
 package com.example.kloset_lab.global.ai.client;
 
-import com.example.kloset_lab.clothes.entity.Category;
 import com.example.kloset_lab.global.ai.dto.*;
 import com.github.f4b6a3.ulid.UlidCreator;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -63,9 +60,11 @@ public class MockAIClient implements AIClient {
 
     @Override
     public BatchResponse getBatchStatus(String batchId) {
-        String majorJson = """
+        String majorJson =
+                """
                 {"category":"TOP","color":["검정"],"material":["면"],"styleTags":["캐주얼","심플"]}""";
-        String extraJson = """
+        String extraJson =
+                """
                 {"category":"TOP","color":["검정"],"material":["면"],"styleTags":["캐주얼","심플"]}""";
 
         List<BatchResponse.TaskResult> results = IntStream.rangeClosed(1, 5)

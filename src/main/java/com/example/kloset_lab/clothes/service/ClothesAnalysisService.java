@@ -102,7 +102,8 @@ public class ClothesAnalysisService {
     }
 
     private void updateBatchAndTasks(TempClothesBatch batch, BatchResponse batchResponse) {
-        batch.updateMeta(batchResponse.status(),
+        batch.updateMeta(
+                batchResponse.status(),
                 batchResponse.meta().completed(),
                 batchResponse.meta().processing(),
                 batchResponse.meta().isFinished());
@@ -114,12 +115,7 @@ public class ClothesAnalysisService {
                     .filter(task -> task.getTaskId().equals(result.taskId()))
                     .findFirst()
                     .ifPresent(task -> {
-                        task.updateResult(
-                                result.status(),
-                                result.fileId(),
-                                result.major(),
-                                result.extra()
-                        );
+                        task.updateResult(result.status(), result.fileId(), result.major(), result.extra());
                     });
         }
     }
@@ -142,9 +138,7 @@ public class ClothesAnalysisService {
     }
 
     private ClothesPollingResponse.TaskResult toTaskResult(TempClothesTask task) {
-        String imageUrl = task.getFileId() != null
-                ? mediaService.getFileFullUrl(task.getFileId())
-                : null;
+        String imageUrl = task.getFileId() != null ? mediaService.getFileFullUrl(task.getFileId()) : null;
 
         MajorFeature major = parseMajorFeature(task.getMajor());
 

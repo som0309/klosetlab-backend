@@ -1,11 +1,8 @@
 package com.example.kloset_lab.global.ai.dto;
 
-import java.util.List;
-
 import com.example.kloset_lab.global.security.config.RawJsonDeserializer;
-import com.fasterxml.jackson.annotation.JsonRawValue;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.util.List;
 import lombok.Builder;
 
 @Builder
@@ -15,8 +12,6 @@ public record BatchResponse(String batchId, BatchStatus status, Meta meta, List<
             String taskId,
             TaskStatus status,
             Long fileId,
-            @JsonDeserialize(using = RawJsonDeserializer.class)
-            String major,
-            @JsonDeserialize(using = RawJsonDeserializer.class)
-            String extra) {}
+            @JsonDeserialize(using = RawJsonDeserializer.class) String major,
+            @JsonDeserialize(using = RawJsonDeserializer.class) String extra) {}
 }
