@@ -108,7 +108,9 @@ public class ClothesAnalysisService {
                 batchResponse.meta().processing(),
                 batchResponse.meta().isFinished());
 
-        if (batchResponse.results() == null) return;
+        if (batchResponse.results() == null) {
+            return;
+        }
 
         for (BatchResponse.TaskResult result : batchResponse.results()) {
             batch.getTasks().stream()
