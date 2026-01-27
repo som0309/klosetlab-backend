@@ -1,7 +1,11 @@
 package com.example.kloset_lab.user.controller;
 
+import static com.example.kloset_lab.global.constants.PaginationDefaults.CLOTHES_LIST;
 import static com.example.kloset_lab.global.constants.PaginationDefaults.FEED_LIST;
 
+import com.example.kloset_lab.clothes.dto.ClothesListItem;
+import com.example.kloset_lab.clothes.entity.Category;
+import com.example.kloset_lab.clothes.service.ClothesService;
 import com.example.kloset_lab.feed.dto.FeedListItem;
 import com.example.kloset_lab.feed.service.FeedService;
 import com.example.kloset_lab.global.response.ApiResponse;
@@ -23,6 +27,7 @@ public class UserController {
 
     private final UserService userService;
     private final FeedService feedService;
+    private final ClothesService clothesService;
 
     /**
      * 회원가입 후 추가 정보 저장 API
@@ -41,16 +46,32 @@ public class UserController {
 
     /**
      * 닉네임 유효성 검사 API
-     * GET /api/v1/users/validation?nickname={nickname}
+     * GET /api/v1/users/validation/nickname?nickname={nickname}
      *
      * @param request 닉네임 검사 요청
      * @return 사용 가능 여부
      */
-    @GetMapping("/validation")
+    @GetMapping("/validation/nickname")
     public ResponseEntity<ApiResponse<NicknameValidationResponse>> validateNickname(
             @Valid NicknameValidationRequest request) {
         NicknameValidationResult result = userService.validateNicknameWithMessage(request.nickname());
         NicknameValidationResponse response = new NicknameValidationResponse(result.isAvailable());
+
+        return ApiResponses.ok(result.message(), response);
+    }
+
+    /**
+     * 생년월일 유효성 검사 API
+     * GET /api/v1/users/validation/birth-date?birthDate={birthDate}
+     *
+     * @param request 생년월일 검사 요청 (yyyy-MM-dd 형식)
+     * @return 유효 여부
+     */
+    @GetMapping("/validation/birth-date")
+    public ResponseEntity<ApiResponse<BirthDateValidationResponse>> validateBirthDate(
+            @Valid BirthDateValidationRequest request) {
+        BirthDateValidationResult result = userService.validateBirthDate(request.birthDate());
+        BirthDateValidationResponse response = new BirthDateValidationResponse(result.isValid());
 
         return ApiResponses.ok(result.message(), response);
     }
@@ -88,5 +109,25 @@ public class UserController {
 
         PagedResponse<FeedListItem> response = feedService.getFeedsByUserId(currentUserId, userId, after, limit);
         return ApiResponses.ok(Message.USER_FEEDS_RETRIEVED, response);
+    }
+
+    /**
+     * 특정 유저의 옷장 조회 API
+     *
+     * @param userId 조회 대상 사용자 ID
+     * @param after 커서 (이전 페이지 마지막 옷 ID)
+     * @param limit 조회 개수
+     * @param category 카테고리 필터 (옵션)
+     * @return 옷 목록 및 페이지 정보
+     */
+    @GetMapping("/{userId}/clothes")
+    public ResponseEntity<ApiResponse<PagedResponse<ClothesListItem>>> getUserClothes(
+            @PathVariable Long userId,
+            @RequestParam(required = false) Long after,
+            @RequestParam(defaultValue = CLOTHES_LIST) int limit,
+            @RequestParam(required = false) Category category) {
+
+        PagedResponse<ClothesListItem> response = clothesService.getClothes(userId, category, after, limit);
+        return ApiResponses.ok(Message.CLOTHES_LIST_RETRIEVED, response);
     }
 }
