@@ -46,12 +46,12 @@ public class UserController {
 
     /**
      * 닉네임 유효성 검사 API
-     * GET /api/v1/users/validation?nickname={nickname}
+     * GET /api/v1/users/validation/nickname?nickname={nickname}
      *
      * @param request 닉네임 검사 요청
      * @return 사용 가능 여부
      */
-    @GetMapping("/validation")
+    @GetMapping("/validation/nickname")
     public ResponseEntity<ApiResponse<NicknameValidationResponse>> validateNickname(
             @Valid NicknameValidationRequest request) {
         NicknameValidationResult result = userService.validateNicknameWithMessage(request.nickname());
