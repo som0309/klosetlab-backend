@@ -10,5 +10,5 @@ import jakarta.validation.constraints.Pattern;
  */
 public record BirthDateValidationRequest(
         @NotBlank(message = "생년월일은 필수입니다.")
-        @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "생년월일 형식은 yyyy-MM-dd 이어야 합니다.")
-        String birthDate) {}
+                @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "생년월일 형식은 yyyy-MM-dd 이어야 합니다.")
+                String birthDate) {}

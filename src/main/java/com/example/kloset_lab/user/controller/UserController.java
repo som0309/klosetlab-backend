@@ -70,7 +70,6 @@ public class UserController {
         return ApiResponses.ok(result.message(), response);
     }
 
-
     /**
      * 특정 유저 프로필 조회 API
      * GET /api/v1/users/{userId}
