@@ -1,9 +1,11 @@
 package com.example.kloset_lab.feed.repository;
 
 import com.example.kloset_lab.feed.entity.Feed;
+import java.time.LocalDateTime;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -36,4 +38,14 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
             ORDER BY f.id DESC
             """)
     Slice<Feed> findByUserIdAndCursor(@Param("userId") Long userId, @Param("cursor") Long cursor, Pageable pageable);
+
+    /**
+     * 특정 유저의 모든 피드를 soft delete 처리
+     *
+     * @param userId 유저 ID
+     * @param deletedAt 삭제 시각
+     */
+    @Modifying
+    @Query("UPDATE Feed f SET f.deletedAt = :deletedAt WHERE f.user.id = :userId AND f.deletedAt IS NULL")
+    void softDeleteAllByUserId(@Param("userId") Long userId, @Param("deletedAt") LocalDateTime deletedAt);
 }
