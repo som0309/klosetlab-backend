@@ -52,6 +52,10 @@ dependencies {
 
 
     implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
+
+    // prometheus
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 spotless {
