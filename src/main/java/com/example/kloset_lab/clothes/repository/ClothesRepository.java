@@ -2,9 +2,11 @@ package com.example.kloset_lab.clothes.repository;
 
 import com.example.kloset_lab.clothes.entity.Category;
 import com.example.kloset_lab.clothes.entity.Clothes;
+import java.time.LocalDateTime;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -61,4 +63,14 @@ public interface ClothesRepository extends JpaRepository<Clothes, Long> {
             @Param("category") Category category,
             @Param("cursor") Long cursor,
             Pageable pageable);
+
+    /**
+     * 특정 유저의 모든 옷을 soft delete 처리
+     *
+     * @param userId 유저 ID
+     * @param deletedAt 삭제 시각
+     */
+    @Modifying
+    @Query("UPDATE Clothes c SET c.deletedAt = :deletedAt WHERE c.user.id = :userId AND c.deletedAt IS NULL")
+    void softDeleteAllByUserId(@Param("userId") Long userId, @Param("deletedAt") LocalDateTime deletedAt);
 }

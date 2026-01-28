@@ -1,10 +1,12 @@
 package com.example.kloset_lab.comment.repository;
 
 import com.example.kloset_lab.comment.entity.Comment;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -67,4 +69,14 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         GROUP BY c.parent.id
     """)
     List<Object[]> countRepliesByParentIds(@Param("parentIds") List<Long> parentIds);
+
+    /**
+     * 특정 유저의 모든 댓글을 soft delete 처리
+     *
+     * @param userId    유저 ID
+     * @param deletedAt 삭제 시각
+     */
+    @Modifying
+    @Query("UPDATE Comment c SET c.deletedAt = :deletedAt WHERE c.user.id = :userId AND c.deletedAt IS NULL")
+    void softDeleteAllByUserId(@Param("userId") Long userId, @Param("deletedAt") LocalDateTime deletedAt);
 }
