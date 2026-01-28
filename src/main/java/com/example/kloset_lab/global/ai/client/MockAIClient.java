@@ -2,10 +2,8 @@ package com.example.kloset_lab.global.ai.client;
 
 import com.example.kloset_lab.global.ai.dto.*;
 import com.github.f4b6a3.ulid.UlidCreator;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.IntStream;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -62,8 +60,7 @@ public class MockAIClient implements AIClient {
         imageUrlList.forEach(url -> {
             String taskId = UlidCreator.getUlid().toString();
 
-            long delay =
-                    MIN_DELAY_MS + random.nextLong(MAX_DELAY_MS - MIN_DELAY_MS);
+            long delay = MIN_DELAY_MS + random.nextLong(MAX_DELAY_MS - MIN_DELAY_MS);
             long completeAt = System.currentTimeMillis() + delay;
 
             long fileId = 6;
@@ -138,17 +135,16 @@ public class MockAIClient implements AIClient {
             results.add(
                     completed
                             ? BatchResponse.TaskResult.builder()
-                            .taskId(taskId)
-                            .status(TaskStatus.COMPLETED)
-                            .fileId(taskInfo.fileId)
-                            .major(majorJson)
-                            .extra(extraJson)
-                            .build()
+                                    .taskId(taskId)
+                                    .status(TaskStatus.COMPLETED)
+                                    .fileId(taskInfo.fileId)
+                                    .major(majorJson)
+                                    .extra(extraJson)
+                                    .build()
                             : BatchResponse.TaskResult.builder()
-                            .taskId(taskId)
-                            .status(TaskStatus.PREPROCESSING)
-                            .build()
-            );
+                                    .taskId(taskId)
+                                    .status(TaskStatus.PREPROCESSING)
+                                    .build());
         }
 
         boolean allCompleted = completedCount == batchInfo.tasks.size();
@@ -165,7 +161,6 @@ public class MockAIClient implements AIClient {
                 .results(results)
                 .build();
     }
-
 
     @Override
     public EmbeddingResponse saveEmbedding(EmbeddingRequest request) {
