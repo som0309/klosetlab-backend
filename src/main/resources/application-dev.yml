@@ -109,7 +109,7 @@ cloud:
       auto: false
 
 kakao:
-  client-id: ${KAKAO_CLIENT_ID:}
+  client-id: ${KAKAO_CLIENT_ID:316561850df4fcec4d8c8f0aaecefc90}
   client-secret: ${KAKAO_CLIENT_SECRET:}
   redirect-uri: ${KAKAO_REDIRECT_URI:}
   token-uri: https://kauth.kakao.com/oauth/token
@@ -121,8 +121,9 @@ cors:
     - http://localhost:3000
     - http://localhost:5173
     - http://localhost:8080
-    - http://43.201.52.45 # 프론트엔드가 이 IP로 브라우저에 접속될 경우 (기본 포트 80)
-    - http://43.201.52.45:3000   # 만약 프론트엔드가 특정 포트를 쓴다면 포함
+    - http://15.164.36.40
+    - http://15.164.36.40:3000
+    - http://15.164.36.40:8080
   allowed-methods:
     - GET
     - POST
