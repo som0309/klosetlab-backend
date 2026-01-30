@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: kloset-lab
+
+  profiles:
+    active: ${SPRING_PROFILE}
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  access-token-expiration: 3600000      # 1시간 (ms)
+  refresh-token-expiration: 604800000   # 1주일 (ms)
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
