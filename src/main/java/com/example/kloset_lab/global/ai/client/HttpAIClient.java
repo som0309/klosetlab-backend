@@ -85,16 +85,12 @@ public class HttpAIClient implements AIClient {
 
     @Override
     public OutfitResponse recommendOutfit(Long userId, String query) {
-        List<FileUploadInfo> fileUploadInfos = createFileUploadInfos(3);
-        List<FileUploadResponse> fileUploadResponses =
-                mediaService.requestFileUpload(userId, Purpose.OUTFIT, fileUploadInfos);
-
         OutfitRequest outfitRequest = OutfitRequest.builder()
                 .userId(userId)
                 .query(query)
                 .sessionId(null)
                 .weather(null)
-                .urls(fileUploadResponses)
+                .urls(null)
                 .build();
         return restClient
                 .post()

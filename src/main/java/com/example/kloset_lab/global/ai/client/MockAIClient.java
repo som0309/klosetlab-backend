@@ -180,8 +180,8 @@ public class MockAIClient implements AIClient {
                 .outfits(List.of(OutfitResponse.Outfit.builder()
                         .outfitId("outfit_mock_001")
                         .description("목 데이터 코디 1")
-                        .items(List.of(1L, 2L))
-                        .fileId(1L)
+                        .fallbackNotice("에 추가될 fallback notice 입니다.")
+                        .clothesIds(List.of(1L, 2L))
                         .build()))
                 .sessionId(null)
                 .build();
