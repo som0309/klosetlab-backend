@@ -8,4 +8,4 @@ package com.example.kloset_lab.feed.dto;
  * @param name     옷 이름
  * @param price    가격
  */
-public record ClothesDto(Long id, String imageUrl, String name, Integer price) {}
+public record FeedClothesDto(Long id, String imageUrl, String name, Integer price) {}
