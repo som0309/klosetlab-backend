@@ -45,6 +45,19 @@ public class UserController {
     }
 
     /**
+     * 회원 탈퇴 API
+     * DELETE /api/v1/users
+     *
+     * @param userId 인증된 회원 ID
+     * @return 200 OK
+     */
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@AuthenticationPrincipal Long userId) {
+        userService.deleteUser(userId);
+        return ApiResponses.ok(Message.USER_DELETED);
+    }
+
+    /**
      * 닉네임 유효성 검사 API
      * GET /api/v1/users/validation/nickname?nickname={nickname}
      *

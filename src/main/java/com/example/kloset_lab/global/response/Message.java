@@ -12,6 +12,7 @@ public class Message {
 
     // User
     public static final String USER_CREATED = "user_created";
+    public static final String USER_DELETED = "user_deleted";
     public static final String NICKNAME_CHECKED_UNIQUE = "nickname_checked_unique";
     public static final String NICKNAME_CHECKED_DUPLICATE = "nickname_checked_duplicate";
     public static final String BIRTH_DATE_VALID = "birth_date_valid";

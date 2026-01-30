@@ -4,7 +4,6 @@ import com.example.kloset_lab.auth.infrastructure.kakao.config.KakaoProperties;
 import com.example.kloset_lab.global.security.filter.JwtAuthenticationFilter;
 import com.example.kloset_lab.global.security.filter.exceptionHandler.CustomAccessDeniedHandler;
 import com.example.kloset_lab.global.security.filter.exceptionHandler.CustomAuthenticationEntryPoint;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -21,13 +20,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties({JwtProperties.class, KakaoProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, KakaoProperties.class, CorsProperties.class})
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final CorsProperties corsProperties;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -78,23 +78,20 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 허용할 origin 설정
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000", // 개발 환경
-                "http://localhost:5173" // Vite 기본 포트
-                ));
+        // yml 설정에서 허용할 origin 읽기
+        configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
 
         // 허용할 HTTP 메서드
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedMethods(corsProperties.getAllowedMethods());
 
         // 허용할 헤더
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(corsProperties.getAllowedHeaders());
 
-        // 인증 정보 포함 허용 (Authorization 헤더 등)
-        configuration.setAllowCredentials(true);
+        // 인증 정보 포함 허용
+        configuration.setAllowCredentials(corsProperties.getAllowCredentials());
 
-        // preflight 요청 캐시 시간 (1시간)
-        configuration.setMaxAge(3600L);
+        // preflight 요청 캐시 시간
+        configuration.setMaxAge(corsProperties.getMaxAge());
 
         // 모든 경로에 대해 위 설정 적용
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
