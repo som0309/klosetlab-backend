@@ -8,12 +8,11 @@ import com.example.kloset_lab.global.response.ApiResponse;
 import com.example.kloset_lab.global.response.ApiResponses;
 import com.example.kloset_lab.global.response.Message;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/clothes")
@@ -75,8 +74,7 @@ public class ClothesController {
 
     @GetMapping("/clothes-details")
     public ResponseEntity<ApiResponse<List<ClothesDto>>> getClothesDetails(
-            @AuthenticationPrincipal Long currentUserId, @RequestParam List<Long> clothesIds
-    ){
+            @AuthenticationPrincipal Long currentUserId, @RequestParam List<Long> clothesIds) {
         return ApiResponses.ok("옷 세부 정보 반환", clothesService.getClothesDetails(clothesIds));
     }
 }

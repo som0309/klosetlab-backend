@@ -168,15 +168,13 @@ public class ClothesService {
     public List<ClothesDto> getClothesDetails(List<Long> clothesIds) {
         List<Clothes> clothes = clothesRepository.findAllById(clothesIds);
         List<ClothesDto> clothesDtos = new ArrayList<>();
-        for(Clothes c : clothes){
-            clothesDtos.add(
-                    ClothesDto.builder()
-                            .id(c.getId())
-                            .imageUrl(mediaService.getFileFullUrl(c.getFile().getId()))
-                            .name(c.getClothesName())
-                            .price(c.getPrice()).build()
-            );
-
+        for (Clothes c : clothes) {
+            clothesDtos.add(ClothesDto.builder()
+                    .id(c.getId())
+                    .imageUrl(mediaService.getFileFullUrl(c.getFile().getId()))
+                    .name(c.getClothesName())
+                    .price(c.getPrice())
+                    .build());
         }
         return clothesDtos;
     }
