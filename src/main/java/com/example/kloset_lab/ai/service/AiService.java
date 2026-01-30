@@ -13,7 +13,6 @@ import com.example.kloset_lab.ai.repository.TpoResultRepository;
 import com.example.kloset_lab.clothes.entity.Clothes;
 import com.example.kloset_lab.clothes.repository.ClothesRepository;
 import com.example.kloset_lab.global.ai.client.AIClient;
-import com.example.kloset_lab.global.ai.client.HttpAIClient;
 import com.example.kloset_lab.global.ai.dto.ClothesDto;
 import com.example.kloset_lab.global.ai.dto.OutfitResponse;
 import com.example.kloset_lab.global.exception.CustomException;
