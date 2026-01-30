@@ -3,6 +3,7 @@ package com.example.kloset_lab.clothes.controller;
 import com.example.kloset_lab.clothes.dto.*;
 import com.example.kloset_lab.clothes.service.ClothesAnalysisService;
 import com.example.kloset_lab.clothes.service.ClothesService;
+import com.example.kloset_lab.feed.dto.ClothesDto;
 import com.example.kloset_lab.global.response.ApiResponse;
 import com.example.kloset_lab.global.response.ApiResponses;
 import com.example.kloset_lab.global.response.Message;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/clothes")
@@ -68,5 +71,12 @@ public class ClothesController {
         clothesService.deleteClothes(currentUserId, clothesId);
 
         return ApiResponses.ok(Message.CLOTHES_DELETED);
+    }
+
+    @GetMapping("/clothes-details")
+    public ResponseEntity<ApiResponse<List<ClothesDto>>> getClothesDetails(
+            @AuthenticationPrincipal Long currentUserId, @RequestParam List<Long> clothesIds
+    ){
+        return ApiResponses.ok("옷 세부 정보 반환", clothesService.getClothesDetails(clothesIds));
     }
 }
