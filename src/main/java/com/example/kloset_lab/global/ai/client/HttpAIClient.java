@@ -108,7 +108,6 @@ public class HttpAIClient implements AIClient {
         List<FileUploadResponse> fileUploadResponses =
                 mediaService.requestFileUpload(userId, Purpose.OUTFIT, fileUploadInfos);
          */
-
         OutfitRequest outfitRequest = OutfitRequest.builder()
                 .userId(userId)
                 .query(query)
