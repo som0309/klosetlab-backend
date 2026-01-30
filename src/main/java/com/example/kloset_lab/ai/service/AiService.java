@@ -12,7 +12,7 @@ import com.example.kloset_lab.ai.repository.TpoResultClothesRepository;
 import com.example.kloset_lab.ai.repository.TpoResultRepository;
 import com.example.kloset_lab.clothes.entity.Clothes;
 import com.example.kloset_lab.clothes.repository.ClothesRepository;
-import com.example.kloset_lab.global.ai.client.HttpAIClient;
+import com.example.kloset_lab.global.ai.client.AIClient;
 import com.example.kloset_lab.global.ai.dto.ClothesDto;
 import com.example.kloset_lab.global.ai.dto.OutfitResponse;
 import com.example.kloset_lab.global.exception.CustomException;
@@ -33,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AiService {
 
-    private final HttpAIClient aIClient;
+    private final AIClient aIClient;
     private final UserRepository userRepository;
     private final TpoRequestRepository tpoRequestRepository;
     private final TpoResultRepository tpoResultRepository;
