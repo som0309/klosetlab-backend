@@ -51,6 +51,7 @@ public enum ErrorCode {
     PARENT_COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "parent_comment_not_found"),
     OUTFIT_NOT_FOUND(HttpStatus.NOT_FOUND, "outfit_not_found"),
     TPO_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "tpo_result_not_found"),
+    RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "clothes_analyze_result_not_found"),
 
     // 409 Conflict
     EXISTING_NICKNAME(HttpStatus.CONFLICT, "existing_nickname"),
