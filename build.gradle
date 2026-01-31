@@ -58,7 +58,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // Rate Limiting - Bucket4j
-    implementation 'com.bucket4j:bucket4j-core:8.10.1'
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.14.0")
 }
 
 spotless {
