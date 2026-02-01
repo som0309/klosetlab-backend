@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -146,7 +145,8 @@ public class HttpAIClient implements AIClient {
         System.out.println("=== [AI-API] getBatchStatus 시작 === batchId: " + batchId);
 
         try {
-            BatchResponse response = restClient.get()
+            BatchResponse response = restClient
+                    .get()
                     .uri("/v1/closet/batches/" + batchId)
                     .retrieve()
                     .body(BatchResponse.class);
