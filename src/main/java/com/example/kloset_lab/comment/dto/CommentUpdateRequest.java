@@ -9,4 +9,5 @@ import jakarta.validation.constraints.Size;
  *
  * @param content 수정할 댓글 내용
  */
-public record CommentUpdateRequest(@NotBlank @Size(max = 500, message = ErrorCode.Code.CONTENT_TOO_LONG) String content) {}
+public record CommentUpdateRequest(
+        @NotBlank @Size(max = 500, message = ErrorCode.Code.CONTENT_TOO_LONG) String content) {}
