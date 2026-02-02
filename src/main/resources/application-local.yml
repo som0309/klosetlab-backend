@@ -9,7 +9,8 @@ spring:
       ddl-auto: update
 
 jwt:
-  secret: ${JWT_SECRET}
+  access-token-expiration: 43200000      # 12시간 (ms)
+  refresh-token-expiration: 604800000   # 1주일 (ms)
 
 cloud:
   aws:
