@@ -39,7 +39,7 @@ public class UserController {
      * @param request 회원가입 요청 정보
      * @return 201 Created
      */
-    @PostMapping ("/v1/users")
+    @PostMapping("/v1/users")
     public ResponseEntity<ApiResponse<Void>> registerUserProfile(
             @AuthenticationPrincipal Long userId, @RequestBody @Valid UserRegisterRequest request) {
         userService.registerUserProfile(userId, request);
