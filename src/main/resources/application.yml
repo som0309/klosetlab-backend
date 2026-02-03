@@ -23,8 +23,8 @@ management:
         include: prometheus
 
 rate-limit:
-  ai-api-daily-limit: 50
-  general-api-minute-limit: 100
+  ai-api-daily-limit: ${RATE_LIMIT_AI_API_DAILY:50}
+  general-api-minute-limit: ${RATE_LIMIT_GENERAL_API_MINUTE:100}
 
 ai:
   api:
