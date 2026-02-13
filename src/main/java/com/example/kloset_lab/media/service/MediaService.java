@@ -123,7 +123,6 @@ public class MediaService {
         List<MediaFile> mediaFiles = mediaFileRepository.findAllById(fileIds);
 
         return mediaFiles.stream()
-                .filter(file -> file.getStatus().equals(FileStatus.UPLOADED)) // 업로드된 것만
                 .collect(Collectors.toMap(
                         MediaFile::getId, file -> storageService.getFullImageUrl(file.getObjectKey())));
     }
