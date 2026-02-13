@@ -52,4 +52,4 @@ decorator:
       multiline: false
       logging: slf4j
       include-parameter-values: false
-      log-format: "%(executionTime) ms | %(sqlSingleLine)"''
+      log-format: "%(executionTime) ms | %(sqlSingleLine)"
