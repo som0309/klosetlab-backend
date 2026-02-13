@@ -1,6 +1,7 @@
 package com.example.kloset_lab.global.security.config;
 
 import com.example.kloset_lab.auth.infrastructure.kakao.config.KakaoProperties;
+import com.example.kloset_lab.global.config.LoggingFilter;
 import com.example.kloset_lab.global.security.filter.JwtAuthenticationFilter;
 import com.example.kloset_lab.global.security.filter.exceptionHandler.CustomAccessDeniedHandler;
 import com.example.kloset_lab.global.security.filter.exceptionHandler.CustomAuthenticationEntryPoint;
@@ -17,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +30,7 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final CorsProperties corsProperties;
+    private final LoggingFilter loggingFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,6 +52,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
+                .addFilterBefore(loggingFilter, CorsFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
