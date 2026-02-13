@@ -66,6 +66,9 @@ dependencies {
 
     // Apache HttpClient 5 (RestClient 커넥션 풀링)
     implementation 'org.apache.httpcomponents.client5:httpclient5'
+
+    // p6spy SQL 로그
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.12.0'
 }
 
 spotless {

@@ -44,3 +44,12 @@ rate-limit:
 ai:
   api:
     base-url: ${AI_API_BASE_URL:http://localhost:8000}
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+      multiline: false
+      logging: slf4j
+      include-parameter-values: false
+      log-format: "%(executionTime) ms | %(sqlSingleLine)"''
