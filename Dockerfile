@@ -5,7 +5,7 @@ LABEL description="Backend Application - Image"
 WORKDIR /app
 
 # 보안을 위한 non-root 유저 생성
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN groupadd -r spring && useradd -r -g spring spring
 
 # CI에서 빌드한 JAR 파일 복사
 COPY build/libs/*.jar app.jar
@@ -13,7 +13,7 @@ COPY build/libs/*.jar app.jar
 # 소유권 변경
 RUN chown spring:spring app.jar
 
-USER spring:spring
+USER spring
 
 # 프로덕션 최적화 JVM 옵션
 ENV SPRING_PROFILES_ACTIVE=prod \
