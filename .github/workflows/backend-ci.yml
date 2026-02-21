@@ -72,7 +72,7 @@ jobs:
           --health-timeout=5s
           --health-retries=5
       redis:
-        image: redis:7
+        image: redis:7.2
         ports:
           - 6379:6379
         options: >-
@@ -345,7 +345,7 @@ jobs:
       - name: Download JAR artifact
         uses: actions/download-artifact@v4
         with:
-          name: app-jar-${{ needs.build.outputs.commit_sha }}
+          name: app-jar-${{ needs.test-and-build.outputs.commit_sha }}
           path: build/libs/
 
       # ------------------------------------------------------
@@ -372,11 +372,11 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: test:${{ needs.build.outputs.image_tag }}
+          tags: test:${{ needs.test-and-build.outputs.image_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VERSION=${{ needs.build.outputs.version }}
+            VERSION=${{ needs.test-and-build.outputs.version }}
 
       # ------------------------------------------------------
       # 6. 검증 결과 요약
@@ -385,7 +385,7 @@ jobs:
         run: |
           echo "### ✅ Docker Build Validation Passed" >> $GITHUB_STEP_SUMMARY
           echo "Dockerfile이 정상적으로 빌드됩니다." >> $GITHUB_STEP_SUMMARY
-          echo "- **Image Tag:** \`test:${{ needs.build.outputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** \`test:${{ needs.test-and-build.outputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
 
       # ------------------------------------------------------
       # 7. PR 코멘트
@@ -397,7 +397,7 @@ jobs:
             const body = `### 🐳 Docker Build Validation
             
             ✅ Dockerfile 빌드 검증 완료
-            - **Image Tag:** \`test:${{ needs.build.outputs.image_tag }}\`
+            - **Image Tag:** \`test:${{ needs.test-and-build.outputs.image_tag }}\`
             - Hadolint 검사 통과
             - Docker 이미지 빌드 성공
             
