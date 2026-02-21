@@ -24,13 +24,13 @@ on:
     branches:
       - dev
       - main
-    paths:
-      - 'src/**'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - 'gradle/**'
-      - 'Dockerfile'
-      - '.github/workflows/backend-ci.yml'
+    # paths:
+    #   - 'src/**'
+    #   - 'build.gradle'
+    #   - 'settings.gradle'
+    #   - 'gradle/**'
+    #   - 'Dockerfile'
+    #   - '.github/workflows/backend-ci.yml'
 
 permissions:
   contents: read
