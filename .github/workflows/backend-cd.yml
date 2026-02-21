@@ -360,14 +360,14 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: "Backend CD Bot"
-          embed-title: ${{ success() && '✅ Dev 배포 성공' || '❌ Dev 배포 실패' }}
+          embed-title: ${{ job.status == 'success' && '✅ Dev 배포 성공' || '❌ Dev 배포 실패' }}
           embed-description: |
             **환경:** Development 🟢
             **이미지:** `${{ steps.image.outputs.image_tag }}`
             **New ASG:** `${{ steps.new-asg.outputs.new_asg_name }}`
             **Old ASG:** `${{ steps.current-check.outputs.current_asg }}`
             
-            ${{ success() && '✅ 새 ASG 생성 → 기존 ASG 교체 완료!' || '❌ 배포 실패 - 롤백됨' }}
+            ${{ job.status == 'success' && '✅ 새 ASG 생성 → 기존 ASG 교체 완료!' || '❌ 배포 실패 - 롤백됨' }}
             
             [📋 로그](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           embed-color: ${{ success() && 3066993 || 15158332 }}
@@ -944,7 +944,7 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: "Backend CD Bot"
-          embed-title: ${{ success() && '✅ Production 배포 성공' || '❌ Production 배포 실패 (롤백됨)' }}
+          embed-title: ${{ job.status == 'success' && '✅ Production 배포 성공' || '❌ Production 배포 실패 (롤백됨)' }}
           embed-description: |
             **환경:** Production 🔴
             **전략:** Weighted Blue-Green (10% → 50% → 100%)
@@ -952,7 +952,7 @@ jobs:
             **New ASG:** `${{ steps.green-asg.outputs.green_asg_name }}`
             **Old Blue ASG:** `${{ steps.blue-check.outputs.blue_asg }}`
             
-            ${{ success() && '✅ 트래픽 전환 → Blue 승격 → Old Blue 삭제 완료!' || '❌ 배포 실패 - Blue로 즉시 롤백됨' }}
+            ${{ job.status == 'success' && '✅ 트래픽 전환 → Blue 승격 → Old Blue 삭제 완료!' || '❌ 배포 실패 - Blue로 즉시 롤백됨' }}
             
             [📋 로그](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          embed-color: ${{ success() && 3066993 || 15158332 }}
+          embed-color: ${{ job.status == 'success' && 3066993 || 15158332 }}
