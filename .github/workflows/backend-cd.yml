@@ -354,23 +354,39 @@ jobs:
       # ------------------------------------------------------
       # 16. Discord 알림
       # ------------------------------------------------------
-      - name: Discord notification
-        if: always()
+      - name: Send Discord notification on success
+        if: success()
         uses: tsickert/discord-webhook@v5.3.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: "Backend CD Bot"
-          embed-title: ${{ job.status == 'success' && '✅ Dev 배포 성공' || '❌ Dev 배포 실패' }}
+          embed-title: "✅ Dev 배포 성공"
           embed-description: |
             **환경:** Development 🟢
             **이미지:** `${{ steps.image.outputs.image_tag }}`
             **New ASG:** `${{ steps.new-asg.outputs.new_asg_name }}`
             **Old ASG:** `${{ steps.current-check.outputs.current_asg }}`
-            
-            ${{ job.status == 'success' && '✅ 새 ASG 생성 → 기존 ASG 교체 완료!' || '❌ 배포 실패 - 롤백됨' }}
-            
+
+            ✅ 새 ASG 생성 → 기존 ASG 교체 완료!
+
             [📋 로그](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          embed-color: ${{ success() && 3066993 || 15158332 }}
+          embed-color: 3066993
+        
+      - name: Send Discord notification on failure
+        if: failure()
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          username: "Backend CD Bot"
+          embed-title: "❌ Dev 배포 실패"
+          embed-description: |
+            **환경:** Development 🟢
+            **이미지:** `${{ steps.image.outputs.image_tag }}`
+
+            ❌ 배포 실패 - 롤백됨
+
+            [📋 로그](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          embed-color: 15158332
 
   # ============================================================
   # Production 환경 배포
@@ -938,21 +954,37 @@ jobs:
       # ------------------------------------------------------
       # 14. Discord 알림
       # ------------------------------------------------------
-      - name: Discord notification
-        if: always()
+      - name: Send Discord notification on success
+        if: success()
         uses: tsickert/discord-webhook@v5.3.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: "Backend CD Bot"
-          embed-title: ${{ job.status == 'success' && '✅ Production 배포 성공' || '❌ Production 배포 실패 (롤백됨)' }}
+          embed-title: "✅ Production 배포 성공"
           embed-description: |
             **환경:** Production 🔴
-            **전략:** Weighted Blue-Green (10% → 50% → 100%)
+            **전략:** Weighted Blue-Green
             **이미지:** `${{ steps.image.outputs.image_tag }}`
             **New ASG:** `${{ steps.green-asg.outputs.green_asg_name }}`
             **Old Blue ASG:** `${{ steps.blue-check.outputs.blue_asg }}`
-            
-            ${{ job.status == 'success' && '✅ 트래픽 전환 → Blue 승격 → Old Blue 삭제 완료!' || '❌ 배포 실패 - Blue로 즉시 롤백됨' }}
-            
+
+            ✅ 트래픽 전환 → Blue 승격 → Old Blue 삭제 완료!
+
             [📋 로그](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          embed-color: ${{ job.status == 'success' && 3066993 || 15158332 }}
+          embed-color: 3066993
+
+      - name: Send Discord notification on failure
+        if: failure()
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          username: "Backend CD Bot"
+          embed-title: "❌ Production 배포 실패"
+          embed-description: |
+            **환경:** Production 🔴
+            **전략:** Weighted Blue-Green
+            **이미지:** `${{ steps.image.outputs.image_tag }}`
+            ❌ 배포 실패 - Blue로 즉시 롤백됨
+
+            [📋 로그](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          embed-color: 15158332
