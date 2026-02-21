@@ -1,0 +1,13 @@
+.git
+.gitignore
+.gradle
+build
+bin
+out
+*.log
+*.md
+README.md
+Dockerfile
+.env
+.DS_Store
+node_modules

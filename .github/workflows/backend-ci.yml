@@ -16,9 +16,10 @@ on:
       - 'build.gradle'
       - 'settings.gradle'
       - 'gradle/**'
+      - 'Dockerfile'
       - '.github/workflows/backend-ci.yml'
 
-  # Push 이벤트 (CD 트리거용)
+  # Push 이벤트 (Docker 빌드 및 ECR 푸시)
   push:
     branches:
       - dev
@@ -28,12 +29,14 @@ on:
       - 'build.gradle'
       - 'settings.gradle'
       - 'gradle/**'
+      - 'Dockerfile'
       - '.github/workflows/backend-ci.yml'
 
 permissions:
   contents: read
   checks: write
   pull-requests: write
+  id-token: write  # OIDC를 위한 권한 추가
 
 # ============================================================
 # 동시성 제어: 같은 PR 또는 브랜치에서 새 실행 시 이전 실행 취소
@@ -43,17 +46,18 @@ concurrency:
   cancel-in-progress: true
 
 # ============================================================
-# CI 작업 정의
+# Jobs
 # ============================================================
 jobs:
-  backend-ci:
-    name: Build and Test
+  # ========================================================
+  # Job 1: 빌드 및 테스트
+  # ========================================================
+  test-and-build:
+    name: Test and Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # ========================================================
     # MySQL 서비스 컨테이너 (테스트용 데이터베이스)
-    # ========================================================
     services:
       mysql:
         image: mysql:8.0
@@ -75,9 +79,7 @@ jobs:
           --health-cmd="redis-cli ping"
           --health-interval=5s
 
-    # ========================================================
-    # 환경 변수 설정 (application-ci.yml에서 사용)
-    # ========================================================
+    # 환경 변수 설정
     env:
       SPRING_PROFILES_ACTIVE: ci
       DB_HOST: localhost
@@ -87,22 +89,60 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
-    # ========================================================
-    # CI 단계 (Steps)
-    # ========================================================
+    outputs:
+      coverage: ${{ steps.coverage.outputs.coverage }}
+      version: ${{ steps.version.outputs.version }}
+      image_tag: ${{ steps.version.outputs.image_tag }}
+      commit_sha: ${{ steps.version.outputs.commit_sha }}
+
     steps:
       # ------------------------------------------------------
       # 1. 소스 코드 체크아웃
       # ------------------------------------------------------
-      - name: 📥 Checkout source code
+      - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # 전체 히스토리 (버전 태그 확인용)
 
       # ------------------------------------------------------
-      # 2. JDK 설정 및 Gradle 캐싱
+      # 2. 버전 정보 추출
       # ------------------------------------------------------
-      - name: ☕ Set up JDK 21
+      - name: Extract version info
+        id: version
+        run: |
+          # Git 태그에서 최신 시맨틱 버전 가져오기
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          VERSION=${LATEST_TAG#v}  # v 제거
+          
+          # 커밋 SHA (short)
+          COMMIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          
+          # 브랜치명
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BRANCH="${{ github.head_ref }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+          
+          # 이미지 태그 생성: {branch}-{version}-{sha}
+          # 예: dev-1.0.0-abc1234, main-1.0.0-abc1234
+          IMAGE_TAG="${BRANCH}-${VERSION}-${COMMIT_SHA}"
+          
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "commit_sha=${COMMIT_SHA}" >> $GITHUB_OUTPUT
+          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          
+          echo "### Version Info" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${COMMIT_SHA}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${BRANCH}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** ${IMAGE_TAG}" >> $GITHUB_STEP_SUMMARY
+
+      # ------------------------------------------------------
+      # 3. JDK 설정 및 Gradle 캐싱
+      # ------------------------------------------------------
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -110,37 +150,40 @@ jobs:
           cache: 'gradle'
 
       # ------------------------------------------------------
-      # 3. Gradle 실행 권한 부여
+      # 4. Gradle 실행 권한 부여
       # ------------------------------------------------------
-      - name: 🔧 Grant execute permission for gradlew
+      - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       # ------------------------------------------------------
-      # 4. 정적 분석 - Checkstyle
+      # 5. 정적 분석 - Checkstyle (PR만)
       # ------------------------------------------------------
-      - name: 🔍 Run Checkstyle
+      - name: Run Checkstyle
+        if: github.event_name == 'pull_request'
         id: checkstyle
         run: ./gradlew checkstyleMain checkstyleTest
         continue-on-error: false
 
       # ------------------------------------------------------
-      # 5. 빌드 (테스트 제외)
+      # 6. 빌드 (테스트 제외, 항상 실행)
       # ------------------------------------------------------
-      - name: 🏗️ Build with Gradle
+      - name: Build with Gradle
         id: build
         run: ./gradlew clean build -x test
 
       # ------------------------------------------------------
-      # 6. 테스트 실행 및 커버리지 측정
+      # 7. 테스트 실행 및 커버리지 측정 (PR만)
       # ------------------------------------------------------
-      - name: 🧪 Run tests with coverage
+      - name: Run tests with coverage
+        if: github.event_name == 'pull_request'
         id: test
         run: ./gradlew test jacocoTestReport --parallel
 
       # ------------------------------------------------------
-      # 7. 테스트 커버리지 검증
+      # 8. 테스트 커버리지 검증 (PR만)
       # ------------------------------------------------------
-      - name: 📊 Verify test coverage
+      - name: Verify test coverage
+        if: github.event_name == 'pull_request'
         id: coverage
         run: |
           ./gradlew jacocoTestCoverageVerification || true
@@ -153,7 +196,7 @@ jobs:
           fi
           
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
-          echo "### 📊 Test Coverage: ${COVERAGE}%" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage: ${COVERAGE}%" >> $GITHUB_STEP_SUMMARY
           
           # 커버리지가 너무 낮으면 경고
           if [ "$COVERAGE" -lt 70 ]; then
@@ -162,10 +205,10 @@ jobs:
         continue-on-error: true
 
       # ------------------------------------------------------
-      # 8. 테스트 결과 발행
+      # 9. 테스트 결과 발행 (PR만)
       # ------------------------------------------------------
-      - name: 📋 Publish test results
-        if: always()
+      - name: Publish test results
+        if: github.event_name == 'pull_request' && always()
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: |
@@ -174,74 +217,33 @@ jobs:
           comment_mode: off
 
       # ------------------------------------------------------
-      # 9. 테스트 리포트 업로드 (실패 시)
+      # 10. 테스트 리포트 업로드 (PR 실패 시)
       # ------------------------------------------------------
-      - name: 📤 Upload test reports
-        if: failure()
+      - name: Upload test reports
+        if: github.event_name == 'pull_request' && failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports-${{ github.event.pull_request.head.sha }}
+          name: test-reports-${{ steps.version.outputs.commit_sha }}
           path: |
             build/reports/tests/test/
             build/reports/jacoco/test/html/
           retention-days: 7
 
       # ------------------------------------------------------
-      # 10. JAR 파일 저장 (main PR/Push)
+      # 11. JAR 파일 저장 (항상)
       # ------------------------------------------------------
-      - name: 📦 Upload build artifact (main)
-        if: (github.base_ref == 'main' || github.ref_name == 'main') && success()
+      - name: Upload JAR artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-jar-main-${{ github.event.pull_request.head.sha || github.sha }}
-          path: build/libs/*.jar
-          retention-days: 90
-
-      # ------------------------------------------------------
-      # 11. JAR 파일 저장 (dev PR/Push)
-      # ------------------------------------------------------
-      - name: 📦 Upload build artifact (dev)
-        if: (github.base_ref == 'dev' || github.ref_name == 'dev') && success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-jar-dev-${{ github.event.pull_request.head.sha || github.sha }}
+          name: app-jar-${{ steps.version.outputs.commit_sha }}
           path: build/libs/*.jar
           retention-days: 7
 
       # ------------------------------------------------------
-      # 12. 빌드 정보 저장 (CD에서 사용)
+      # 12. PR에 결과 코멘트 작성 (PR만)
       # ------------------------------------------------------
-      - name: 💾 Save build metadata
-        if: success()
-        run: |
-          mkdir -p build-info
-          cat > build-info/metadata.json <<EOF
-          {
-            "buildTime": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
-            "commitSha": "${{ github.event.pull_request.head.sha || github.sha }}",
-            "commitShort": "$(echo ${{ github.event.pull_request.head.sha || github.sha }} | cut -c1-7)",
-            "branch": "${{ github.head_ref || github.ref_name }}",
-            "baseBranch": "${{ github.base_ref || github.ref_name }}",
-            "prNumber": "${{ github.event.pull_request.number || 'N/A' }}",
-            "prTitle": "${{ github.event.pull_request.title || 'Direct Push' }}",
-            "author": "${{ github.event.pull_request.user.login || github.actor }}",
-            "coverage": "${{ steps.coverage.outputs.coverage }}"
-          }
-          EOF
-          cat build-info/metadata.json
-
-      - name: 📤 Upload build metadata
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-metadata-${{ github.event.pull_request.head.sha || github.sha }}
-          path: build-info/metadata.json
-          retention-days: 30
-
-      # ------------------------------------------------------
-      # 13. PR에 결과 코멘트 작성
-      # ------------------------------------------------------
-      - name: 💬 Comment PR with results
+      - name: Comment PR with results
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
@@ -250,6 +252,8 @@ jobs:
             const checkstyle = '${{ steps.checkstyle.outcome }}';
             const build = '${{ steps.build.outcome }}';
             const test = '${{ steps.test.outcome }}';
+            const version = '${{ steps.version.outputs.version }}';
+            const imageTag = '${{ steps.version.outputs.image_tag }}';
             
             const getIcon = (status) => status === 'success' ? '✅' : status === 'failure' ? '❌' : '⚠️';
             
@@ -269,12 +273,15 @@ jobs:
             | 🧪 Tests | ${getIcon(test)} ${test} | 단위 테스트 |
             | 📊 Coverage | ${getCoverageColor(coverage)} ${coverage}% | 테스트 커버리지 |
             
+            ### 📦 Build Information
+            - **Version:** \`${version}\`
+            - **Image Tag:** \`${imageTag}\`
+            - **Branch:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`
+            - **Commit:** \`${context.payload.pull_request.head.sha.substring(0, 7)}\`
+            - **Author:** @${{ github.event.pull_request.user.login }}
+            
             <details>
             <summary>📋 상세 정보</summary>
-            
-            - **브랜치:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`
-            - **커밋:** \`${context.payload.pull_request.head.sha.substring(0, 7)}\`
-            - **작성자:** @${{ github.event.pull_request.user.login }}
             
             ### 📊 테스트 커버리지 기준
             - 🟢 80% 이상: 우수
@@ -315,53 +322,281 @@ jobs:
               });
             }
 
+  # ========================================================
+  # Job 2: Docker 빌드 검증 (PR만)
+  # ========================================================
+  docker-validate:
+    name: Docker Build Validation
+    needs: test-and-build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
       # ------------------------------------------------------
-      # 14. Discord 알림 - 성공 (PR only)
+      # 1. 소스 코드 체크아웃
       # ------------------------------------------------------
-      - name: 📢 Send Discord notification on success
-        if: success() && github.event_name == 'pull_request'
-        uses: tsickert/discord-webhook@v5.3.0
-        with:
-          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          username: "Backend CI Bot"
-          avatar-url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
-          embed-title: "✅ Backend CI 성공"
-          embed-description: |
-            **PR:** #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}
-            **브랜치:** `${{ github.head_ref }}` → `${{ github.base_ref }}`
-            **작성자:** @${{ github.event.pull_request.user.login }}
-            **커버리지:** ${{ steps.coverage.outputs.coverage }}%
-            
-            모든 검사를 통과했습니다! 🎉
-            
-            [🔗 PR 보기](${{ github.event.pull_request.html_url }})
-          embed-color: 3066993
-          embed-footer-text: ${{ github.repository }}
-          embed-timestamp: ${{ github.event.pull_request.updated_at }}
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
       # ------------------------------------------------------
-      # 15. Discord 알림 - 실패 (PR only)
+      # 2. 빌드한 JAR 다운로드
       # ------------------------------------------------------
-      - name: 📢 Send Discord notification on failure
-        if: failure() && github.event_name == 'pull_request'
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar-${{ needs.build.outputs.commit_sha }}
+          path: build/libs/
+
+      # ------------------------------------------------------
+      # 3. Dockerfile 문법 검사
+      # ------------------------------------------------------
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+
+      # ------------------------------------------------------
+      # 4. Docker Buildx 설정
+      # ------------------------------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ------------------------------------------------------
+      # 5. Docker 빌드 테스트
+      # ------------------------------------------------------
+      - name: Build Docker image (validation only)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: test:${{ needs.build.outputs.image_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ needs.build.outputs.version }}
+
+      # ------------------------------------------------------
+      # 6. 검증 결과 요약
+      # ------------------------------------------------------
+      - name: Docker validation success
+        run: |
+          echo "### ✅ Docker Build Validation Passed" >> $GITHUB_STEP_SUMMARY
+          echo "Dockerfile이 정상적으로 빌드됩니다." >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** \`test:${{ needs.build.outputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+
+      # ------------------------------------------------------
+      # 7. PR 코멘트
+      # ------------------------------------------------------
+      - name: Comment Docker validation result
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `### 🐳 Docker Build Validation
+            
+            ✅ Dockerfile 빌드 검증 완료
+            - **Image Tag:** \`test:${{ needs.build.outputs.image_tag }}\`
+            - Hadolint 검사 통과
+            - Docker 이미지 빌드 성공
+            
+            머지 후 ECR에 푸시됩니다.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+  # ========================================================
+  # Job 3: Docker 빌드 및 ECR 푸시 (Push 이벤트만)
+  # ========================================================
+  deploy:
+    name: Deploy to ECR
+    needs: test-and-build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # OIDC를 위한 permissions 설정
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # ------------------------------------------------------
+      # 1. 소스 코드 체크아웃
+      # ------------------------------------------------------
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------
+      # 2. JAR 파일 다운로드
+      # ------------------------------------------------------
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar-${{ needs.test-and-build.outputs.commit_sha }}
+          path: build/libs/
+
+      # ------------------------------------------------------
+      # 3. AWS OIDC 인증
+      # ------------------------------------------------------
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      # ------------------------------------------------------
+      # 4. ECR 로그인
+      # ------------------------------------------------------
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ------------------------------------------------------
+      # 5. Docker 메타데이터 추출
+      # ------------------------------------------------------
+      - name: Extract Docker metadata
+        id: meta
+        run: |
+          ECR_REGISTRY=${{ steps.ecr-login.outputs.registry }}
+          ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG=${{ needs.test-and-build.outputs.image_tag }}
+          BRANCH=${{ github.ref_name }}
+          
+          # 전체 이미지 URI
+          IMAGE_URI="${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          LATEST_TAG="${ECR_REGISTRY}/${ECR_REPOSITORY}:${BRANCH}-latest"
+          
+          echo "image_uri=${IMAGE_URI}" >> $GITHUB_OUTPUT
+          echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          echo "ecr_registry=${ECR_REGISTRY}" >> $GITHUB_OUTPUT
+          echo "ecr_repository=${ECR_REPOSITORY}" >> $GITHUB_OUTPUT
+          
+          echo "### 🐳 Docker Image Info" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image URI:** \`${IMAGE_URI}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest Tag:** \`${LATEST_TAG}\`" >> $GITHUB_STEP_SUMMARY
+
+      # ------------------------------------------------------
+      # 6. Docker Buildx 설정
+      # ------------------------------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ------------------------------------------------------
+      # 7. Docker 이미지 빌드 및 푸시
+      # ------------------------------------------------------
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image_uri }}
+            ${{ steps.meta.outputs.latest_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          build-args: |
+            VERSION=${{ needs.test-and-build.outputs.version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      # ------------------------------------------------------
+      # 8. 이미지 취약점 스캔 (Trivy)
+      # ------------------------------------------------------
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.image_uri }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+
+      # ------------------------------------------------------
+      # 9. 빌드 메타데이터 저장
+      # ------------------------------------------------------
+      - name: Save build metadata
+        run: |
+          mkdir -p build-info
+          cat > build-info/docker-metadata.json <<EOF
+          {
+            "imageUri": "${{ steps.meta.outputs.image_uri }}",
+            "latestTag": "${{ steps.meta.outputs.latest_tag }}",
+            "ecrRegistry": "${{ steps.meta.outputs.ecr_registry }}",
+            "ecrRepository": "${{ steps.meta.outputs.ecr_repository }}",
+            "imageTag": "${{ needs.test-and-build.outputs.image_tag }}",
+            "version": "${{ needs.test-and-build.outputs.version }}",
+            "branch": "${{ github.ref_name }}",
+            "commitSha": "${{ github.sha }}",
+            "buildTime": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "author": "${{ github.actor }}",
+            "coverage": "${{ needs.test-and-build.outputs.coverage }}"
+          }
+          EOF
+          cat build-info/docker-metadata.json
+
+      # ------------------------------------------------------
+      # 10. 빌드 메타데이터 업로드
+      # ------------------------------------------------------
+      - name: Upload build metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-metadata-${{ github.ref_name }}-${{ github.sha }}
+          path: build-info/docker-metadata.json
+          retention-days: 90
+
+      # ------------------------------------------------------
+      # 11. Discord 알림 - 성공
+      # ------------------------------------------------------
+      - name: Send Discord notification on success
+        if: success()
         uses: tsickert/discord-webhook@v5.3.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          username: "Backend CI Bot"
+          username: "Backend CI/CD Bot"
           avatar-url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
-          embed-title: "❌ Backend CI 실패"
+          embed-title: "✅ Docker 이미지 ECR 푸시 성공"
           embed-description: |
-            **PR:** #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}
-            **브랜치:** `${{ github.head_ref }}` → `${{ github.base_ref }}`
-            **작성자:** @${{ github.event.pull_request.user.login }}
+            **브랜치:** `${{ github.ref_name }}`
+            **버전:** `${{ needs.test-and-build.outputs.version }}`
+            **이미지 태그:** `${{ needs.test-and-build.outputs.image_tag }}`
             
-            **실패 단계:**
-            • Code Style: ${{ steps.checkstyle.outcome }}
-            • Build: ${{ steps.build.outcome }}
-            • Tests: ${{ steps.test.outcome }}
+            **ECR URI:**
+            ```
+            ${{ steps.meta.outputs.image_uri }}
+            ```
             
-            [🔗 PR 보기](${{ github.event.pull_request.html_url }})
-            [📋 CI 로그 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            CD 파이프라인에서 위 이미지를 사용하여 배포할 수 있습니다. 🚀
+            
+            [🔗 Actions 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          embed-color: 3066993
+          embed-footer-text: ${{ github.repository }}
+
+      # ------------------------------------------------------
+      # 12. Discord 알림 - 실패
+      # ------------------------------------------------------
+      - name: Send Discord notification on failure
+        if: failure()
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          username: "Backend CI/CD Bot"
+          avatar-url: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+          embed-title: "❌ Docker 이미지 ECR 푸시 실패"
+          embed-description: |
+            **브랜치:** `${{ github.ref_name }}`
+            **커밋:** `${{ github.sha }}`
+            
+            Docker 빌드 또는 ECR 푸시 중 오류가 발생했습니다.
+            
+            [🔗 Actions 로그 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           embed-color: 15158332
           embed-footer-text: ${{ github.repository }}
-          embed-timestamp: ${{ github.event.pull_request.updated_at }}
