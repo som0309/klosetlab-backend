@@ -108,19 +108,21 @@ export FASTAPI_URL=$(get_param "/klosetlab/${ENVIRONMENT}/spring/fastapi/url")
 
 # docker-compose.yml 생성
 echo "Creating docker-compose.yml..."
+
 cat > docker-compose.yml <<'COMPOSE_EOF'
-{{COMPOSE_TEMPLATE}}
+$(cat ${TEMPLATES_DIR}/docker-compose.yml)
 COMPOSE_EOF
 
 # .env 파일 생성
 echo "Creating .env file..."
+
 cat > .env <<'ENV_EOF'
-{{ENV_TEMPLATE}}
+$(cat ${TEMPLATES_DIR}/.env.template)
 ENV_EOF
 
 # envsubst로 환경 변수 치환
-envsubst < .env > .env
-rm .env
+envsubst < .env > .env.tmp
+mv .env.tmp .env
 
 # 파일 권한
 chmod 600 .env
@@ -168,15 +170,6 @@ docker compose logs --tail=50
 docker compose ps
 exit 1
 EOF
-
-# 템플릿 삽입
-sed -i "s|{{COMPOSE_TEMPLATE}}|${COMPOSE_TEMPLATE}|g" user-data.sh
-sed -i "s|{{ENV_TEMPLATE}}|${ENV_TEMPLATE}|g" user-data.sh
-
-# 변수 치환
-sed -i "s|{{IMAGE_URI}}|${IMAGE_URI}|g" user-data.sh
-sed -i "s|{{AWS_REGION}}|${AWS_REGION}|g" user-data.sh
-sed -i "s|{{ENVIRONMENT}}|${ENVIRONMENT}|g" user-data.sh
 
 # Base64 인코딩
 USER_DATA_BASE64=$(base64 -w 0 user-data.sh)
