@@ -12,7 +12,7 @@ TEMPLATES_DIR="${SCRIPT_DIR}/../templates"
 
 # 템플릿 파일 읽기
 COMPOSE_TEMPLATE=$(cat "${TEMPLATES_DIR}/docker-compose.yml")
-ENV_TEMPLATE=$(cat "${TEMPLATES_DIR}/.env")
+ENV_TEMPLATE=$(cat "${TEMPLATES_DIR}/.env.template")
 
 # User Data 스크립트 생성
 cat > user-data.sh <<'EOF'
@@ -32,20 +32,41 @@ export ENVIRONMENT="{{ENVIRONMENT}}"
 
 # 필수 도구 설치
 echo "Installing required tools..."
-yum update -y
-yum install -y docker jq gettext-base
+
+apt update -y
+apt install -y ca-certificates curl gnupg jq gettext-base awscli
+
+install -m 0755 -d /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+apt update -y
+
+apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+systemctl enable docker
+systemctl start docker
+
+echo "Docker version:"
+docker --version
+docker compose version
 
 # Docker 설정
 systemctl start docker
 systemctl enable docker
-usermod -a -G docker ec2-user
-
-# Docker Compose 설치
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+usermod -a -G docker ubuntu
 
 # 작업 디렉토리
-APP_DIR="/home/ec2-user/app"
+APP_DIR="/home/ubuntu/app"
 mkdir -p ${APP_DIR}
 cd ${APP_DIR}
 
@@ -66,24 +87,24 @@ get_secure_param() {
 }
 
 # 환경 변수 설정
-export MONGODB_HOST=$(get_param "/${ENVIRONMENT}/mongodb/host")
-export MONGODB_PORT=$(get_param "/${ENVIRONMENT}/mongodb/port")
-export MONGODB_DATABASE=$(get_param "/${ENVIRONMENT}/mongodb/database")
-export MONGODB_USERNAME=$(get_secure_param "/${ENVIRONMENT}/mongodb/username")
-export MONGODB_PASSWORD=$(get_secure_param "/${ENVIRONMENT}/mongodb/password")
+export MONGODB_HOST=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/host")
+export MONGODB_PORT=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/port")
+export MONGODB_DATABASE=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/database")
+export MONGODB_USERNAME=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/username")
+export MONGODB_PASSWORD=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/password")
 
-export REDIS_HOST=$(get_param "/${ENVIRONMENT}/redis/host")
-export REDIS_PORT=$(get_param "/${ENVIRONMENT}/redis/port")
-export REDIS_PASSWORD=$(get_secure_param "/${ENVIRONMENT}/redis/password")
+export REDIS_HOST=$(get_param "/klosetlab/${ENVIRONMENT}/spring/redis/host")
+export REDIS_PORT=$(get_param "/klosetlab/${ENVIRONMENT}/spring/redis/port")
+export REDIS_PASSWORD=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/redis/password")
 
-export KAFKA_BOOTSTRAP_SERVERS=$(get_param "/${ENVIRONMENT}/kafka/bootstrap-servers")
+# export KAFKA_BOOTSTRAP_SERVERS=$(get_param "/klosetlab/${ENVIRONMENT}/spring/kafka/bootstrap-servers")
 
-export MYSQL_HOST=$(get_param "/${ENVIRONMENT}/mysql/host")
-export MYSQL_DATABASE=$(get_param "/${ENVIRONMENT}/mysql/database")
-export MYSQL_USERNAME=$(get_secure_param "/${ENVIRONMENT}/mysql/username")
-export MYSQL_PASSWORD=$(get_secure_param "/${ENVIRONMENT}/mysql/password")
+export MYSQL_HOST=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mysql/host")
+export MYSQL_DATABASE=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mysql/database")
+export MYSQL_USERNAME=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mysql/username")
+export MYSQL_PASSWORD=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mysql/password")
 
-export FASTAPI_URL=$(get_param "/${ENVIRONMENT}/fastapi/url")
+export FASTAPI_URL=$(get_param "/klosetlab/${ENVIRONMENT}/spring/fastapi/url")
 
 # docker-compose.yml 생성
 echo "Creating docker-compose.yml..."
@@ -113,11 +134,11 @@ echo "Deploying application..."
 
 # 이미지 Pull
 echo "Pulling Docker image..."
-docker-compose pull
+docker compose pull
 
 # 컨테이너 시작
 echo "Starting containers..."
-docker-compose up -d --remove-orphans
+docker compose up -d --remove-orphans
 
 # 헬스체크
 echo "Waiting for application health..."
@@ -143,8 +164,8 @@ DEPLOY_EOF
 done
 
 echo "❌ Health check failed after 30 attempts"
-docker-compose logs --tail=50
-docker-compose ps
+docker compose logs --tail=50
+docker compose ps
 exit 1
 EOF
 
