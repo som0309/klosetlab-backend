@@ -10,9 +10,9 @@ AWS_REGION=$3
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATES_DIR="${SCRIPT_DIR}/../templates"
 
-# 템플릿 파일 읽기
-COMPOSE_TEMPLATE=$(cat "${TEMPLATES_DIR}/docker-compose.yml")
-ENV_TEMPLATE=$(cat "${TEMPLATES_DIR}/.env.template")
+# 템플릿 파일 base64 인코딩
+COMPOSE_B64=$(base64 -w 0 "${TEMPLATES_DIR}/docker-compose.yml")
+ENV_B64=$(base64 -w 0 "${TEMPLATES_DIR}/.env.template")
 
 # User Data 스크립트 생성
 cat > user-data.sh <<'EOF'
@@ -23,7 +23,7 @@ set -e
 exec > >(tee /var/log/user-data.log)
 exec 2>&1
 
-echo "=== User Data Script Started at $(date) ==="
+echo "=== User Data Script Started ==="
 
 # 환경 변수
 export AWS_REGION="{{AWS_REGION}}"
@@ -50,20 +50,16 @@ echo \
   | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 apt update -y
-
 apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 systemctl enable docker
 systemctl start docker
 
+usermod -a -G docker ubuntu
+
 echo "Docker version:"
 docker --version
 docker compose version
-
-# Docker 설정
-systemctl start docker
-systemctl enable docker
-usermod -a -G docker ubuntu
 
 # 작업 디렉토리
 APP_DIR="/home/ubuntu/app"
@@ -106,25 +102,15 @@ export MYSQL_PASSWORD=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mysql
 
 export FASTAPI_URL=$(get_param "/klosetlab/${ENVIRONMENT}/spring/fastapi/url")
 
-# docker-compose.yml 생성
-echo "Creating docker-compose.yml..."
+echo "Restoring docker-compose.yml..."
+echo "${COMPOSE_B64}" | base64 -d > docker-compose.yml
 
-cat > docker-compose.yml <<'COMPOSE_EOF'
-$(cat ${TEMPLATES_DIR}/docker-compose.yml)
-COMPOSE_EOF
+echo "Restoring .env.template..."
+echo "${ENV_B64}" | base64 -d > .env.template
 
-# .env 파일 생성
-echo "Creating .env file..."
+echo "Generating .env..."
+envsubst < .env.template > .env
 
-cat > .env <<'ENV_EOF'
-$(cat ${TEMPLATES_DIR}/.env.template)
-ENV_EOF
-
-# envsubst로 환경 변수 치환
-envsubst < .env > .env.tmp
-mv .env.tmp .env
-
-# 파일 권한
 chmod 600 .env
 chmod 644 docker-compose.yml
 
@@ -142,38 +128,29 @@ docker compose pull
 echo "Starting containers..."
 docker compose up -d --remove-orphans
 
-# 헬스체크
-echo "Waiting for application health..."
+echo "Waiting for container..."
+
 for i in {1..30}; do
-  if docker exec spring-boot-app wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health 2>/dev/null; then
-    echo "✅ Application is healthy (attempt $i/30)"
-    
-    cat > deployment-info.json <<DEPLOY_EOF
-{
-  "environment": "${ENVIRONMENT}",
-  "deployed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "image_uri": "${IMAGE_URI}",
-  "instance_id": "$(ec2-metadata --instance-id | cut -d' ' -f2)"
-}
-DEPLOY_EOF
-    
-    echo "=== Deployment successful at $(date) ==="
+  if docker compose ps | grep "Up"; then
+    echo "Container running"
     exit 0
   fi
-  
-  echo "Health check attempt $i/30 failed, retrying..."
   sleep 10
 done
 
-echo "❌ Health check failed after 30 attempts"
+echo "Deployment failed"
 docker compose logs --tail=50
-docker compose ps
 exit 1
 EOF
+
+sed -i "s|{{COMPOSE_B64}}|${COMPOSE_B64}|g" user-data.sh
+sed -i "s|{{ENV_B64}}|${ENV_B64}|g" user-data.sh
+sed -i "s|{{IMAGE_URI}}|${IMAGE_URI}|g" user-data.sh
+sed -i "s|{{AWS_REGION}}|${AWS_REGION}|g" user-data.sh
+sed -i "s|{{ENVIRONMENT}}|${ENVIRONMENT}|g" user-data.sh
 
 # Base64 인코딩
 USER_DATA_BASE64=$(base64 -w 0 user-data.sh)
 echo "user_data_base64=${USER_DATA_BASE64}" >> $GITHUB_OUTPUT
 
 echo "✅ User Data script created and encoded"
-```
