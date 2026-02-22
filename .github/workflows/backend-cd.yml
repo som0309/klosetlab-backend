@@ -109,7 +109,7 @@ jobs:
           echo "current_tg_arn=${CURRENT_TG_ARN}" >> $GITHUB_OUTPUT
 
           ALL_ASGS=$(aws autoscaling describe-auto-scaling-groups \
-            --query 'AutoScalingGroups[?starts_with(AutoScalingGroupName, `backend-dev-`)].AutoScalingGroupName' \
+            --query 'AutoScalingGroups[?starts_with(AutoScalingGroupName, `klosetlab-staging-v2-app-`)].AutoScalingGroupName' \
             --output json)
 
           CURRENT_ASG="none"
@@ -164,7 +164,7 @@ jobs:
           chmod +x .github/scripts/generate-userdata.sh
           
           .github/scripts/generate-userdata.sh \
-            "dev" \
+            "staging" \
             "${{ steps.image.outputs.image_uri }}" \
             "${{ env.AWS_REGION }}"
       
