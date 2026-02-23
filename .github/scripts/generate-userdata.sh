@@ -30,6 +30,9 @@ export AWS_REGION="{{AWS_REGION}}"
 export IMAGE_URI="{{IMAGE_URI}}"
 export ENVIRONMENT="{{ENVIRONMENT}}"
 
+COMPOSE_B64="{{COMPOSE_B64}}"
+ENV_B64="{{ENV_B64}}"
+
 # 필수 도구 설치
 echo "Installing required tools..."
 
