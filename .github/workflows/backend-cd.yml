@@ -286,6 +286,29 @@ jobs:
           echo "❌ New ASG failed to become healthy"
           exit 1
 
+      - name: Debug ASG state
+        if: always()
+        run: |
+          NEW_ASG="${{ steps.new-asg.outputs.new_asg_name }}"
+          
+          echo "=== ASG Instances ==="
+          aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names ${NEW_ASG} \
+            --query 'AutoScalingGroups[0].Instances' \
+            --output table
+          
+          echo "=== Target Group Health (전체) ==="
+          aws elbv2 describe-target-health \
+            --target-group-arn ${{ secrets.DEV_TARGET_GROUP_ARN }} \
+            --output table
+          
+          echo "=== Recent ASG Activity ==="
+          aws autoscaling describe-scaling-activities \
+            --auto-scaling-group-name ${NEW_ASG} \
+            --max-items 5 \
+            --query 'Activities[*].[StatusCode,StatusMessage,Description]' \
+            --output table
+
       # ------------------------------------------------------
       # 9. ASG 정리
       # ------------------------------------------------------
