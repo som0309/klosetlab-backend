@@ -86,19 +86,35 @@ get_secure_param() {
 }
 
 # 환경 변수 설정
+export SPRING_PROFILE=$(get_param "/klosetlab/${ENVIRONMENT}/spring/profile")
+export SERVER_PORT=$(get_param "/klosetlab/${ENVIRONMENT}/spring/server/port")
+
+export JWT_SECRET=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/jwt/secret")
+
+export KAKAO_CLIENT_ID=$(get_param "/klosetlab/${ENVIRONMENT}/spring/oauth/kakao/client-id")
+export KAKAO_CLIENT_SECRET=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/oauth/kakao/client-secret")
+export KAKAO_REDIRECT_URI=$(get_param "/klosetlab/${ENVIRONMENT}/spring/oauth/kakao/redirect-uri")
+
+export AWS_S3_BUCKET=$(get_param "/klosetlab/${ENVIRONMENT}/spring/aws/s3/bucket")
+export AI_API_BASE_URL=$(get_param "/klosetlab/${ENVIRONMENT}/spring/ai/api-base-url")
+
+export RATE_LIMIT_AI_API_DAILY=$(get_param "/klosetlab/${ENVIRONMENT}/spring/rate-limit/ai-api-daily")
+export RATE_LIMIT_GENERAL_API_MINUTE=$(get_param "/klosetlab/${ENVIRONMENT}/spring/rate-limit/general-api-minute")
+
 export MONGODB_HOST=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/host")
 export MONGODB_PORT=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/port")
 export MONGODB_DATABASE=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/database")
 export MONGODB_USERNAME=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/username")
 export MONGODB_PASSWORD=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mongodb/password")
 
-export REDIS_HOST=$(get_param "/klosetlab/${ENVIRONMENT}/spring/redis/host")
-export REDIS_PORT=$(get_param "/klosetlab/${ENVIRONMENT}/spring/redis/port")
-export REDIS_PASSWORD=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/redis/password")
+export REDIS_HOST=$(get_param "/klosetlab/${ENVIRONMENT}/spring/redis-main/host")
+export REDIS_PORT=$(get_param "/klosetlab/${ENVIRONMENT}/spring/redis-main/port")
+export REDIS_PASSWORD=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/redis-main/password")
 
 # export KAFKA_BOOTSTRAP_SERVERS=$(get_param "/klosetlab/${ENVIRONMENT}/spring/kafka/bootstrap-servers")
 
 export MYSQL_HOST=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mysql/host")
+export MYSQL_PORT=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mysql/port")
 export MYSQL_DATABASE=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mysql/database")
 export MYSQL_USERNAME=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mysql/username")
 export MYSQL_PASSWORD=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mysql/password")
