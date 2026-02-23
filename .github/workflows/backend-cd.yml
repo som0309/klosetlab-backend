@@ -25,17 +25,17 @@ env:
 
 jobs:
   # ============================================================
-  # Dev 환경 배포
+  # Staging 환경 배포
   # ============================================================
-  deploy-dev:
-    name: Deploy to Development
+  deploy-staging:
+    name: Deploy to Staging
     if: |
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'dev' &&
       github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     environment:
-      name: development
+      name: staging
       url: http://dev-api.yourdomain.com #Todo
     timeout-minutes: 30
 
@@ -57,7 +57,7 @@ jobs:
       - name: Download Docker metadata
         uses: actions/download-artifact@v4
         with:
-          name: docker-metadata-dev-${{ github.event.workflow_run.head_sha }}
+          name: docker-metadata-staging-${{ github.event.workflow_run.head_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
@@ -186,8 +186,8 @@ jobs:
               \"TagSpecifications\": [{
                 \"ResourceType\": \"instance\",
                 \"Tags\": [
-                  {\"Key\": \"Name\", \"Value\": \"backend-dev-${TIMESTAMP}\"},
-                  {\"Key\": \"Environment\", \"Value\": \"development\"},
+                  {\"Key\": \"Name\", \"Value\": \"klosetlab-staging-v2-app-${TIMESTAMP}\"},
+                  {\"Key\": \"Environment\", \"Value\": \"staging\"},
                   {\"Key\": \"ImageTag\", \"Value\": \"${{ steps.image.outputs.image_tag }}\"},
                   {\"Key\": \"CommitSHA\", \"Value\": \"${{ github.event.workflow_run.head_sha }}\"}
                 ]
@@ -206,7 +206,7 @@ jobs:
         id: new-asg
         run: |
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          NEW_ASG_NAME="backend-dev-${TIMESTAMP}"
+          NEW_ASG_NAME="klosetlab-staging-v2-app-asg-${TIMESTAMP}"
           CURRENT_TG_ARN="${{ steps.current-check.outputs.current_tg_arn }}"
 
           if [ -z "$CURRENT_TG_ARN" ] || [ "$CURRENT_TG_ARN" = "None" ]; then
@@ -223,8 +223,8 @@ jobs:
             --vpc-zone-identifier "${{ secrets.DEV_SUBNET_IDS }}" \
             --health-check-type ELB \
             --health-check-grace-period 180 \
-            --tags "Key=Name,Value=backend-dev,PropagateAtLaunch=true" \
-                   "Key=Environment,Value=development,PropagateAtLaunch=true" \
+            --tags "Key=Name,Value=klosetlab-staging-v2-app,PropagateAtLaunch=true" \
+                   "Key=Environment,Value=staging,PropagateAtLaunch=true" \
                    "Key=ImageTag,Value=${{ steps.image.outputs.image_tag }},PropagateAtLaunch=true"
 
           echo "new_asg_name=${NEW_ASG_NAME}" >> $GITHUB_OUTPUT
@@ -316,7 +316,7 @@ jobs:
         run: |
           cat > deployment-info.json <<EOF
           {
-            "environment": "development",
+            "environment": "staging",
             "deployed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "image_uri": "${{ steps.image.outputs.image_uri }}",
             "image_tag": "${{ steps.image.outputs.image_tag }}",
@@ -360,9 +360,9 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: "Backend CD Bot"
-          embed-title: "✅ Dev 배포 성공"
+          embed-title: "✅ Staging 배포 성공"
           embed-description: |
-            **환경:** Development 🟢
+            **환경:** Staging 🟢
             **이미지:** `${{ steps.image.outputs.image_tag }}`
             **New ASG:** `${{ steps.new-asg.outputs.new_asg_name }}`
             **Old ASG:** `${{ steps.current-check.outputs.current_asg }}`
@@ -378,9 +378,9 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           username: "Backend CD Bot"
-          embed-title: "❌ Dev 배포 실패"
+          embed-title: "❌ Staging 배포 실패"
           embed-description: |
-            **환경:** Development 🟢
+            **환경:** Staging 🟢
             **이미지:** `${{ steps.image.outputs.image_tag }}`
 
             ❌ 배포 실패 - 롤백됨
