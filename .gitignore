@@ -39,13 +39,11 @@ out/
 ### Environment Variables ###
 .env
 .env.*
+!.env.template
 env
-!.github/templates/.env.template
 
 ### DB Local Setting ###
-docker-compose.yml
 mysql_data/
-!.github/templates/docker-compose.yml
 
 ### OS Files (Mac) ###
 .DS_Store

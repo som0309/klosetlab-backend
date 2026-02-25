@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: staging
-      url: https://staging-api.klosetlab.site
+      url: http://dev-api.klosetlab.com #Todo
     timeout-minutes: 30
 
     permissions:
@@ -459,7 +459,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://klosetlab.site
+      url: https://klosetlab.site #Todo
     timeout-minutes: 60
 
     permissions:

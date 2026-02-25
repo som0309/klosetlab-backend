@@ -95,6 +95,8 @@ export KAKAO_CLIENT_ID=$(get_param "/klosetlab/${ENVIRONMENT}/spring/oauth/kakao
 export KAKAO_CLIENT_SECRET=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/oauth/kakao/client-secret")
 export KAKAO_REDIRECT_URI=$(get_param "/klosetlab/${ENVIRONMENT}/spring/oauth/kakao/redirect-uri")
 
+export INTERNAL_API_KEY=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/security/internal-api-key")
+
 export AWS_S3_BUCKET=$(get_param "/klosetlab/${ENVIRONMENT}/spring/aws/s3/bucket")
 export AI_API_BASE_URL=$(get_param "/klosetlab/${ENVIRONMENT}/spring/ai/api-base-url")
 
@@ -118,8 +120,6 @@ export MYSQL_PORT=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mysql/port")
 export MYSQL_DATABASE=$(get_param "/klosetlab/${ENVIRONMENT}/spring/mysql/database")
 export MYSQL_USERNAME=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mysql/username")
 export MYSQL_PASSWORD=$(get_secure_param "/klosetlab/${ENVIRONMENT}/spring/mysql/password")
-
-export FASTAPI_URL=$(get_param "/klosetlab/${ENVIRONMENT}/spring/fastapi/url")
 
 echo "Restoring docker-compose.yml..."
 echo "${COMPOSE_B64}" | base64 -d > docker-compose.yml
