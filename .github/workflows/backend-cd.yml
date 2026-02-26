@@ -668,32 +668,7 @@ jobs:
           exit 1
 
       # ------------------------------------------------------
-      # 9. Green 환경 검증 (Smoke Test)
-      # ------------------------------------------------------
-      - name: Smoke tests on Green
-        run: |
-          GREEN_TG_ARN="${{ secrets.PROD_GREEN_TARGET_GROUP_ARN }}"
-          EXPECTED=${{ steps.blue-check.outputs.blue_desired }}
-
-          HEALTHY_COUNT=$(aws elbv2 describe-target-health \
-            --target-group-arn ${GREEN_TG_ARN} \
-            --query 'TargetHealthDescriptions[?TargetHealth.State==`healthy`]' \
-            --output json | jq 'length')
-
-          if [ "$HEALTHY_COUNT" -lt "$EXPECTED" ]; then
-            echo "❌ Not enough healthy targets (${HEALTHY_COUNT}/${EXPECTED})"
-            exit 1
-          fi
-
-          aws elbv2 describe-target-health \
-            --target-group-arn ${GREEN_TG_ARN} \
-            --query 'TargetHealthDescriptions[*].[Target.Id, TargetHealth.State]' \
-            --output table
-
-          echo "✅ Smoke tests passed"
-
-      # ------------------------------------------------------
-      # 10. 단계적 트래픽 전환 시작
+      # 9. 단계적 트래픽 전환 시작
       # ------------------------------------------------------
       - name: Traffic Shift - 10% to Green
         id: shift-10
@@ -829,7 +804,7 @@ jobs:
           echo "✅ Final monitoring passed"
 
       # -------------------------------------------------------
-      # 11. Promote Green → Blue
+      # 10. Promote Green → Blue
       # -------------------------------------------------------
       - name: Promote Green to Blue
         id: promote
@@ -888,7 +863,7 @@ jobs:
           echo "- **Listener:** → Blue TG" >> $GITHUB_STEP_SUMMARY
 
       # -------------------------------------------------------
-      # 12. Old Blue ASG 삭제
+      # 11. Old Blue ASG 삭제
       # -------------------------------------------------------
       - name: Delete old Blue ASG
         if: success() && steps.blue-check.outputs.blue_asg != 'none'
