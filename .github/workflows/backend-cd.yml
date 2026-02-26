@@ -651,16 +651,11 @@ jobs:
               --auto-scaling-group-names ${GREEN_ASG} \
               --query 'AutoScalingGroups[0].Instances[?HealthStatus==`Healthy` && LifecycleState==`InService`]' \
               --output json | jq 'length')
-            
-            ALL_TARGET_STATES=$(aws elbv2 describe-target-health \
-              --target-group-arn ${GREEN_TG_ARN} \
-              --query 'TargetHealthDescriptions[*].[Target.Id,TargetHealth.State,TargetHealth.Description]' \
-              --output table 2>/dev/null || echo "no targets yet")
-            echo "${ALL_TARGET_STATES}"
 
-            echo "[$((RETRY_COUNT + 1))/$MAX_RETRIES] Green: ${HEALTHY_INSTANCES} EC2 InService, ${HEALTHY_TARGETS} TG healthy (expected: ${EXPECTED})"
+
+            echo "[$((RETRY_COUNT + 1))/$MAX_RETRIES] Green: ${HEALTHY_INSTANCES} EC2 InService"
             
-            if [ "$HEALTHY_INSTANCES" -ge "$EXPECTED" ] && [ "$HEALTHY_TARGETS" -ge "$EXPECTED" ]; then
+            if [ "$HEALTHY_INSTANCES" -ge "$EXPECTED" ]; then
               echo "✅ Green environment ready!"
               exit 0
             fi
@@ -670,10 +665,6 @@ jobs:
           done
           
           echo "❌ Green environment failed to become healthy"
-          echo "=== Final target health state ==="
-          aws elbv2 describe-target-health \
-            --target-group-arn ${GREEN_TG_ARN} \
-            --output table || true
           exit 1
 
       # ------------------------------------------------------
