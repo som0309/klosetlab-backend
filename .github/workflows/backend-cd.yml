@@ -166,7 +166,7 @@ jobs:
           .github/scripts/generate-userdata.sh \
             "staging" \
             "${{ steps.image.outputs.image_uri }}" \
-            "${{ env.AWS_REGION }}"s
+            "${{ env.AWS_REGION }}"
       
       # ------------------------------------------------------
       # 6. Launch Template 버전 생성
