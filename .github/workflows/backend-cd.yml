@@ -17,12 +17,12 @@ permissions:
   actions: read
   id-token: write
 
-# ============================================================
-# 동시성 제어: 같은 브랜치에서 새 실행 시 이전 실행 취소
-# ============================================================
-concurrency:
-  group: cd-${{ github.event.workflow_run.head_sha || github.run_id  }}
-  cancel-in-progress: true
+# # ============================================================
+# # 동시성 제어: 같은 브랜치에서 새 실행 시 이전 실행 취소
+# # ============================================================
+# concurrency:
+#   group: cd-${{ github.event.workflow_run.head_sha || github.run_id  }}
+#   cancel-in-progress: true
 
 # ============================================================
 # 환경 변수 설정
