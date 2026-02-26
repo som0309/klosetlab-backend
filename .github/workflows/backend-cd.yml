@@ -622,8 +622,8 @@ jobs:
             --desired-capacity ${{ steps.blue-check.outputs.blue_desired }} \
             --target-group-arns ${GREEN_TG_ARN} \
             --vpc-zone-identifier "${{ secrets.PROD_SUBNET_IDS }}" \
-            --health-check-type ELB \
-            --health-check-grace-period 300 \
+            --health-check-type EC2 \
+            --health-check-grace-period 180 \
             --tags "Key=Name,Value=klosetlab-app-green,PropagateAtLaunch=true" \
                    "Key=Environment,Value=prod,PropagateAtLaunch=true" \
                    "Key=DeploymentColor,Value=green,PropagateAtLaunch=true"
@@ -652,12 +652,13 @@ jobs:
               --query 'AutoScalingGroups[0].Instances[?HealthStatus==`Healthy` && LifecycleState==`InService`]' \
               --output json | jq 'length')
             
-            HEALTHY_TARGETS=$(aws elbv2 describe-target-health \
+            ALL_TARGET_STATES=$(aws elbv2 describe-target-health \
               --target-group-arn ${GREEN_TG_ARN} \
-              --query 'TargetHealthDescriptions[?TargetHealth.State==`healthy`]' \
-              --output json | jq 'length')
-            
-            echo "[$((RETRY_COUNT + 1))/$MAX_RETRIES] Green: ${HEALTHY_INSTANCES} instances, ${HEALTHY_TARGETS} targets"
+              --query 'TargetHealthDescriptions[*].[Target.Id,TargetHealth.State,TargetHealth.Description]' \
+              --output table 2>/dev/null || echo "no targets yet")
+            echo "${ALL_TARGET_STATES}"
+
+            echo "[$((RETRY_COUNT + 1))/$MAX_RETRIES] Green: ${HEALTHY_INSTANCES} EC2 InService, ${HEALTHY_TARGETS} TG healthy (expected: ${EXPECTED})"
             
             if [ "$HEALTHY_INSTANCES" -ge "$EXPECTED" ] && [ "$HEALTHY_TARGETS" -ge "$EXPECTED" ]; then
               echo "✅ Green environment ready!"
@@ -668,7 +669,11 @@ jobs:
             RETRY_COUNT=$((RETRY_COUNT + 1))
           done
           
-          echo "❌ Green environment failed"
+          echo "❌ Green environment failed to become healthy"
+          echo "=== Final target health state ==="
+          aws elbv2 describe-target-health \
+            --target-group-arn ${GREEN_TG_ARN} \
+            --output table || true
           exit 1
 
       # ------------------------------------------------------
