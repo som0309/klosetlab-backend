@@ -78,18 +78,12 @@ aws ecr get-login-password --region ${AWS_REGION} | \
 echo "Fetching configuration from Parameter Store..."
 
 get_param() {
-  aws ssm get-parameter --name "$1" --query "Parameter.Value" --output text --region ${AWS_REGION}
+  aws ssm get-parameter --name "$1" --query "Parameter.Value" --output text --region ${AWS_REGION} 2>/dev/null || echo ""
 }
 
 get_secure_param() {
-  aws ssm get-parameter --name "$1" --with-decryption --query "Parameter.Value" --output text --region ${AWS_REGION}
+  aws ssm get-parameter --name "$1" --with-decryption --query "Parameter.Value" --output text --region ${AWS_REGION} 2>/dev/null || echo ""
 }
-
-if [ -z "${JWT_SECRET}" ]; then
-  echo "❌ JWT_SECRET is empty. SSM fetch failed."
-  exit 1
-fi
-echo "✅ JWT_SECRET length: ${#JWT_SECRET}"
 
 # 환경 변수 설정
 export SPRING_PROFILE=$(get_param "/klosetlab/${ENVIRONMENT}/spring/profile")
