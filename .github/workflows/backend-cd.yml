@@ -676,12 +676,21 @@ jobs:
           LISTENER_ARN="${{ secrets.PROD_ALB_LISTENER_ARN }}"
           BLUE_TG_ARN="${{ secrets.PROD_BLUE_TARGET_GROUP_ARN }}"
           GREEN_TG_ARN="${{ secrets.PROD_GREEN_TARGET_GROUP_ARN }}"
+
+          echo "=== Finding /api/* rule ARN ==="
+
+          API_RULE_ARN=$(aws elbv2 describe-rules \
+            --listener-arn "$LISTENER_ARN" \
+            --query "Rules[?Conditions[?Field=='path-pattern' && contains(Values, '/api/*')]].RuleArn" \
+            --output text)
+
+          echo "Rule ARN: $API_RULE_ARN"
           
           echo "=== Shifting 10% traffic to Green ==="
           
-          aws elbv2 modify-listener \
-            --listener-arn ${LISTENER_ARN} \
-            --default-actions "[
+          aws elbv2 modify-rule \
+            --rule-arn "$API_RULE_ARN" \
+            --actions "[
               {
                 \"Type\": \"forward\",
                 \"ForwardConfig\": {
@@ -724,12 +733,21 @@ jobs:
           LISTENER_ARN="${{ secrets.PROD_ALB_LISTENER_ARN }}"
           BLUE_TG_ARN="${{ secrets.PROD_BLUE_TARGET_GROUP_ARN }}"
           GREEN_TG_ARN="${{ secrets.PROD_GREEN_TARGET_GROUP_ARN }}"
+
+          echo "=== Finding /api/* rule ARN ==="
+
+          API_RULE_ARN=$(aws elbv2 describe-rules \
+            --listener-arn "$LISTENER_ARN" \
+            --query "Rules[?Conditions[?Field=='path-pattern' && contains(Values, '/api/*')]].RuleArn" \
+            --output text)
+
+          echo "Rule ARN: $API_RULE_ARN"
           
           echo "=== Shifting 50% traffic to Green ==="
           
-          aws elbv2 modify-listener \
-            --listener-arn ${LISTENER_ARN} \
-            --default-actions "[
+          aws elbv2 modify-rule \
+            --rule-arn "$API_RULE_ARN" \
+            --actions "[
               {
                 \"Type\": \"forward\",
                 \"ForwardConfig\": {
@@ -771,12 +789,30 @@ jobs:
         run: |
           LISTENER_ARN="${{ secrets.PROD_ALB_LISTENER_ARN }}"
           GREEN_TG_ARN="${{ secrets.PROD_GREEN_TARGET_GROUP_ARN }}"
+
+          echo "=== Finding /api/* rule ARN ==="
+
+          API_RULE_ARN=$(aws elbv2 describe-rules \
+            --listener-arn "$LISTENER_ARN" \
+            --query "Rules[?Conditions[?Field=='path-pattern' && contains(Values, '/api/*')]].RuleArn" \
+            --output text)
+
+          echo "Rule ARN: $API_RULE_ARN"
           
           echo "=== Shifting 100% traffic to Green ==="
           
-          aws elbv2 modify-listener \
-            --listener-arn ${LISTENER_ARN} \
-            --default-actions Type=forward,TargetGroupArn=${GREEN_TG_ARN}
+          aws elbv2 modify-rule \
+            --rule-arn "$API_RULE_ARN" \
+            --actions "[
+              {
+                \"Type\": \"forward\",
+                \"ForwardConfig\": {
+                  \"TargetGroups\": [
+                    {\"TargetGroupArn\": \"${GREEN_TG_ARN}\", \"Weight\": 100}
+                  ]
+                }
+              }
+            ]"
           
           echo "✅ 100% traffic on Green"
           echo "### ✅ Traffic: Green 100%" >> $GITHUB_STEP_SUMMARY
@@ -848,9 +884,23 @@ jobs:
           done
 
           # 3. Listener를 Blue TG로 복구
-          aws elbv2 modify-listener \
-            --listener-arn ${LISTENER_ARN} \
-            --default-actions Type=forward,TargetGroupArn=${BLUE_TG_ARN}
+          API_RULE_ARN=$(aws elbv2 describe-rules \
+            --listener-arn "$LISTENER_ARN" \
+            --query "Rules[?Conditions[?Field=='path-pattern' && contains(Values, '/api/*')]].RuleArn" \
+            --output text)
+          
+          aws elbv2 modify-rule \
+            --rule-arn "$API_RULE_ARN" \
+            --actions "[
+              {
+                \"Type\": \"forward\",
+                \"ForwardConfig\": {
+                  \"TargetGroups\": [
+                    {\"TargetGroupArn\": \"${BLUE_TG_ARN}\", \"Weight\": 100}
+                  ]
+                }
+              }
+            ]"
 
           # 4. Green TG에서 연결 해제
           aws autoscaling detach-load-balancer-target-groups \
