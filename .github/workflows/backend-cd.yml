@@ -269,44 +269,55 @@ jobs:
           echo "### 🟢 New ASG Created" >> $GITHUB_STEP_SUMMARY
           echo "- **ASG:** \`${NEW_ASG_NAME}\`" >> $GITHUB_STEP_SUMMARY
 
-      # ------------------------------------------------------
-      # 8. Green 환경 준비 대기 (EC2 및 Target Group 헬스체크)
-      # ------------------------------------------------------
-      - name: Wait for Green environment
-        timeout-minutes: 20
+      - name: Wait for new ASG to be ready
+        timeout-minutes: 15
         run: |
-          GREEN_ASG="${{ steps.green-asg.outputs.green_asg_name }}"
-          GREEN_TG_ARN="${{ secrets.PROD_GREEN_TARGET_GROUP_ARN }}"
-          EXPECTED=${{ steps.blue-check.outputs.blue_desired }}
-          
-          MAX_RETRIES=120
+          NEW_ASG="${{ steps.new-asg.outputs.new_asg_name }}"
+          CURRENT_TG_ARN="${{ steps.current-check.outputs.current_tg_arn }}"
+          EXPECTED=${{ steps.current-check.outputs.desired }}
+
+          if [ -z "$CURRENT_TG_ARN" ] || [ "$CURRENT_TG_ARN" = "None" ]; then
+            CURRENT_TG_ARN="${{ secrets.DEV_TARGET_GROUP_ARN }}"
+          fi
+
+          MAX_RETRIES=90
           RETRY_COUNT=0
-          
+
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            # 1. EC2 인스턴스가 ASG에서 InService 상태인지 확인
-            HEALTHY_EC2=$(aws autoscaling describe-auto-scaling-groups \
-              --auto-scaling-group-names ${GREEN_ASG} \
-              --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`]' \
+            HEALTHY_INSTANCES=$(aws autoscaling describe-auto-scaling-groups \
+              --auto-scaling-group-names ${NEW_ASG} \
+              --query 'AutoScalingGroups[0].Instances[?HealthStatus==`Healthy` && LifecycleState==`InService`]' \
               --output json | jq 'length')
 
-            # 2. Target Group 내에서 애플리케이션이 Healthy 상태인지 확인 (핵심)
-            HEALTHY_TARGETS=$(aws elbv2 describe-target-health \
-              --target-group-arn ${GREEN_TG_ARN} \
-              --query 'TargetHealthDescriptions[?TargetHealth.State==`healthy`]' \
-              --output json | jq 'length')
+            NEW_INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+              --auto-scaling-group-names ${NEW_ASG} \
+              --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`].InstanceId' \
+              --output json)
 
-            echo "[$((RETRY_COUNT + 1))/$MAX_RETRIES] Green Status - EC2: ${HEALTHY_EC2}/${EXPECTED}, Target Group: ${HEALTHY_TARGETS}/${EXPECTED}"
-            
-            if [ "$HEALTHY_TARGETS" -ge "$EXPECTED" ]; then
-              echo "✅ Green environment is fully ready and receiving traffic safely!"
+            HEALTHY_TARGETS=0
+            for instance_id in $(echo "$NEW_INSTANCE_IDS" | jq -r '.[]'); do
+              STATE=$(aws elbv2 describe-target-health \
+                --target-group-arn ${CURRENT_TG_ARN} \
+                --targets Id=${instance_id} \
+                --query 'TargetHealthDescriptions[0].TargetHealth.State' \
+                --output text 2>/dev/null || echo "unknown")
+              if [ "$STATE" = "healthy" ]; then
+                HEALTHY_TARGETS=$((HEALTHY_TARGETS + 1))
+              fi
+            done
+
+            echo "[$((RETRY_COUNT + 1))/$MAX_RETRIES] Healthy: ${HEALTHY_INSTANCES} instances, ${HEALTHY_TARGETS} targets (expected: ${EXPECTED})"
+
+            if [ "$HEALTHY_INSTANCES" -ge "$EXPECTED" ] && [ "$HEALTHY_TARGETS" -ge "$EXPECTED" ]; then
+              echo "✅ New ASG is ready!"
               exit 0
             fi
-            
+
             sleep 10
             RETRY_COUNT=$((RETRY_COUNT + 1))
           done
-          
-          echo "❌ Green environment targets failed to become healthy"
+
+          echo "❌ New ASG failed to become healthy"
           exit 1
 
       # ------------------------------------------------------
@@ -623,7 +634,7 @@ jobs:
           echo "- **ASG:** \`${GREEN_ASG_NAME}\`" >> $GITHUB_STEP_SUMMARY
 
       # ------------------------------------------------------
-      # 8. Green 환경 준비 대기 (헬스체크)
+      # 8. Green 환경 준비 대기 (EC2 및 Target Group 헬스체크)
       # ------------------------------------------------------
       - name: Wait for Green environment
         timeout-minutes: 20
@@ -636,16 +647,22 @@ jobs:
           RETRY_COUNT=0
           
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            HEALTHY_INSTANCES=$(aws autoscaling describe-auto-scaling-groups \
+            # 1. EC2 인스턴스가 ASG에서 InService 상태인지 확인
+            HEALTHY_EC2=$(aws autoscaling describe-auto-scaling-groups \
               --auto-scaling-group-names ${GREEN_ASG} \
-              --query 'AutoScalingGroups[0].Instances[?HealthStatus==`Healthy` && LifecycleState==`InService`]' \
+              --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`]' \
               --output json | jq 'length')
 
+            # 2. Target Group 내에서 애플리케이션이 Healthy 상태인지 확인
+            HEALTHY_TARGETS=$(aws elbv2 describe-target-health \
+              --target-group-arn ${GREEN_TG_ARN} \
+              --query 'TargetHealthDescriptions[?TargetHealth.State==`healthy`]' \
+              --output json | jq 'length')
 
-            echo "[$((RETRY_COUNT + 1))/$MAX_RETRIES] Green: ${HEALTHY_INSTANCES} EC2 InService"
+            echo "[$((RETRY_COUNT + 1))/$MAX_RETRIES] Green Status - EC2: ${HEALTHY_EC2}/${EXPECTED}, Target Group: ${HEALTHY_TARGETS}/${EXPECTED}"
             
-            if [ "$HEALTHY_INSTANCES" -ge "$EXPECTED" ]; then
-              echo "✅ Green environment ready!"
+            if [ "$HEALTHY_TARGETS" -ge "$EXPECTED" ]; then
+              echo "✅ Green environment is fully ready and receiving traffic safely!"
               exit 0
             fi
             
@@ -653,7 +670,7 @@ jobs:
             RETRY_COUNT=$((RETRY_COUNT + 1))
           done
           
-          echo "❌ Green environment failed to become healthy"
+          echo "❌ Green environment targets failed to become healthy"
           exit 1
 
       # ------------------------------------------------------
