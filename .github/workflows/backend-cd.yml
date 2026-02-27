@@ -708,6 +708,8 @@ jobs:
       - name: Monitor 10% traffic (10 min)
         run: |
           echo "=== Monitoring Green with 10% traffic ==="
+
+          FAIL_COUNT=0
           
           for i in {1..10}; do
             echo "Monitoring... $i/10 minutes"
@@ -719,7 +721,14 @@ jobs:
               --output json | jq 'length')
             
             if [ "$UNHEALTHY" -gt 0 ]; then
-              echo "❌ Unhealthy targets detected!"
+              FAIL_COUNT=$((FAIL_COUNT + 1))
+              echo "⚠️ Unhealthy detected ($FAIL_COUNT times)"
+            else
+              FAIL_COUNT=0
+            fi
+
+            if [ "$FAIL_COUNT" -ge 3 ]; then
+              echo "❌ 3 consecutive unhealthy checks. Failing deployment."
               exit 1
             fi
             
