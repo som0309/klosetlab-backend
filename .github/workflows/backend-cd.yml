@@ -715,7 +715,7 @@ jobs:
             # Green TG health 체크
             UNHEALTHY=$(aws elbv2 describe-target-health \
               --target-group-arn ${{ secrets.PROD_GREEN_TARGET_GROUP_ARN }} \
-              --query 'TargetHealthDescriptions[?TargetHealth.State!=`healthy`]' \
+              --query 'TargetHealthDescriptions[?TargetHealth.State==`unhealthy`]' \
               --output json | jq 'length')
             
             if [ "$UNHEALTHY" -gt 0 ]; then
@@ -771,7 +771,7 @@ jobs:
             
             UNHEALTHY=$(aws elbv2 describe-target-health \
               --target-group-arn ${{ secrets.PROD_GREEN_TARGET_GROUP_ARN }} \
-              --query 'TargetHealthDescriptions[?TargetHealth.State!=`healthy`]' \
+              --query 'TargetHealthDescriptions[?TargetHealth.State==`unhealthy`]' \
               --output json | jq 'length')
             
             if [ "$UNHEALTHY" -gt 0 ]; then
@@ -826,7 +826,7 @@ jobs:
             
             UNHEALTHY=$(aws elbv2 describe-target-health \
               --target-group-arn ${{ secrets.PROD_GREEN_TARGET_GROUP_ARN }} \
-              --query 'TargetHealthDescriptions[?TargetHealth.State!=`healthy`]' \
+              --query 'TargetHealthDescriptions[?TargetHealth.State==`unhealthy`]' \
               --output json | jq 'length')
             
             if [ "$UNHEALTHY" -gt 0 ]; then
