@@ -17,13 +17,6 @@ permissions:
   actions: read
   id-token: write
 
-# # ============================================================
-# # 동시성 제어: 같은 브랜치에서 새 실행 시 이전 실행 취소
-# # ============================================================
-# concurrency:
-#   group: cd-${{ github.event.workflow_run.head_sha || github.run_id  }}
-#   cancel-in-progress: true
-
 # ============================================================
 # 환경 변수 설정
 # ============================================================
@@ -575,7 +568,7 @@ jobs:
             "${{ env.AWS_REGION }}"
       
       # ------------------------------------------------------
-      # 6. Launch Template 버전 생성
+      # 6. Green Launch Template 버전 생성
       # ------------------------------------------------------
       - name: Create Green Launch Template version
         id: green-lt
@@ -592,7 +585,7 @@ jobs:
               \"TagSpecifications\": [{
                 \"ResourceType\": \"instance\",
                 \"Tags\": [
-                  {\"Key\": \"Name\", \"Value\": \"klosetlab-app-green-${TIMESTAMP}\"},
+                  {\"Key\": \"Name\", \"Value\": \"klosetlab-prod-v2-app-${TIMESTAMP}\"},
                   {\"Key\": \"Environment\", \"Value\": \"prod\"},
                   {\"Key\": \"DeploymentColor\", \"Value\": \"green\"},
                   {\"Key\": \"ImageTag\", \"Value\": \"${{ steps.image.outputs.image_tag }}\"}
@@ -611,7 +604,7 @@ jobs:
         id: green-asg
         run: |
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          GREEN_ASG_NAME="klosetlab-app-green-${TIMESTAMP}"
+          GREEN_ASG_NAME="klosetlab-prod-v2-app-${TIMESTAMP}"
           GREEN_TG_ARN="${{ secrets.PROD_GREEN_TARGET_GROUP_ARN }}"
           
           aws autoscaling create-auto-scaling-group \
@@ -624,7 +617,7 @@ jobs:
             --vpc-zone-identifier "${{ secrets.PROD_SUBNET_IDS }}" \
             --health-check-type EC2 \
             --health-check-grace-period 180 \
-            --tags "Key=Name,Value=klosetlab-app-green,PropagateAtLaunch=true" \
+            --tags "Key=Name,Value=klosetlab-prod-v2-app,PropagateAtLaunch=true" \
                    "Key=Environment,Value=prod,PropagateAtLaunch=true" \
                    "Key=DeploymentColor,Value=green,PropagateAtLaunch=true"
           
@@ -647,13 +640,11 @@ jobs:
           RETRY_COUNT=0
           
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            # 1. EC2 인스턴스가 ASG에서 InService 상태인지 확인
             HEALTHY_EC2=$(aws autoscaling describe-auto-scaling-groups \
               --auto-scaling-group-names ${GREEN_ASG} \
-              --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`]' \
+              --query 'AutoScalingGroups[0].Instances[?HealthStatus==`Healthy` && LifecycleState==`InService`]' \
               --output json | jq 'length')
 
-            # 2. Target Group 내에서 애플리케이션이 Healthy 상태인지 확인
             HEALTHY_TARGETS=$(aws elbv2 describe-target-health \
               --target-group-arn ${GREEN_TG_ARN} \
               --query 'TargetHealthDescriptions[?TargetHealth.State==`healthy`]' \
@@ -781,6 +772,8 @@ jobs:
         run: |
           echo "=== Monitoring Green with 50% traffic ==="
           
+          FAIL_COUNT=0
+
           for i in {1..15}; do
             echo "Monitoring... $i/15 minutes"
             
@@ -790,7 +783,14 @@ jobs:
               --output json | jq 'length')
             
             if [ "$UNHEALTHY" -gt 0 ]; then
-              echo "❌ Issues detected!"
+              FAIL_COUNT=$((FAIL_COUNT + 1))
+              echo "⚠️ Unhealthy detected ($FAIL_COUNT times)"
+            else
+              FAIL_COUNT=0
+            fi
+
+            if [ "$FAIL_COUNT" -ge 3 ]; then
+              echo "❌ 3 consecutive unhealthy checks. Failing deployment."
               exit 1
             fi
             
@@ -999,9 +999,23 @@ jobs:
 
           echo "=== Emergency Rollback to Blue ==="
 
-          aws elbv2 modify-listener \
-            --listener-arn ${LISTENER_ARN} \
-            --default-actions Type=forward,TargetGroupArn=${BLUE_TG_ARN} || true
+          API_RULE_ARN=$(aws elbv2 describe-rules \
+            --listener-arn "$LISTENER_ARN" \
+            --query "Rules[?Conditions[?Field=='path-pattern' && contains(Values, '/api/*')]].RuleArn" \
+            --output text)
+
+          aws elbv2 modify-rule \
+            --rule-arn "$API_RULE_ARN" \
+            --actions "[
+              {
+                \"Type\": \"forward\",
+                \"ForwardConfig\": {
+                  \"TargetGroups\": [
+                    {\"TargetGroupArn\": \"${BLUE_TG_ARN}\", \"Weight\": 100}
+                  ]
+                }
+              }
+            ]"
 
           echo "✅ Listener reverted to Blue TG"
 
