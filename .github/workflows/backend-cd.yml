@@ -101,9 +101,14 @@ jobs:
         run: |
           LISTENER_ARN="${{ secrets.DEV_ALB_LISTENER_ARN }}"
 
-          CURRENT_TG_ARN=$(aws elbv2 describe-listeners \
-            --listener-arns ${LISTENER_ARN} \
-            --query 'Listeners[0].DefaultActions[0].TargetGroupArn' \
+          API_RULE_ARN=$(aws elbv2 describe-rules \
+            --listener-arn ${LISTENER_ARN} \
+            --query "Rules[?Conditions[?Field=='path-pattern' && contains(Values, '/api/*')]].RuleArn" \
+            --output text)
+
+          CURRENT_TG_ARN=$(aws elbv2 describe-rules \
+            --rule-arns ${API_RULE_ARN} \
+            --query 'Rules[0].Actions[0].ForwardConfig.TargetGroups[0].TargetGroupArn' \
             --output text)
 
           echo "current_tg_arn=${CURRENT_TG_ARN}" >> $GITHUB_OUTPUT
@@ -202,6 +207,7 @@ jobs:
       # ------------------------------------------------------
       # 7. ASG 생성
       # ------------------------------------------------------
+      
       # - name: Create new ASG
       #   id: new-asg
       #   run: |
@@ -262,6 +268,9 @@ jobs:
           echo "### 🟢 New ASG Created" >> $GITHUB_STEP_SUMMARY
           echo "- **ASG:** \`${NEW_ASG_NAME}\`" >> $GITHUB_STEP_SUMMARY
 
+      # ------------------------------------------------------
+      # 8. ASG 준비 대기
+      # ------------------------------------------------------
       - name: Wait for new ASG to be ready
         timeout-minutes: 15
         run: |
@@ -493,9 +502,14 @@ jobs:
           LISTENER_ARN="${{ secrets.PROD_ALB_LISTENER_ARN }}"
           BLUE_TG_ARN="${{ secrets.PROD_BLUE_TARGET_GROUP_ARN }}"
 
-          CURRENT_TG=$(aws elbv2 describe-listeners \
-            --listener-arns ${LISTENER_ARN} \
-            --query 'Listeners[0].DefaultActions[0].TargetGroupArn' \
+          API_RULE_ARN=$(aws elbv2 describe-rules \
+            --listener-arn ${LISTENER_ARN} \
+            --query "Rules[?Conditions[?Field=='path-pattern' && contains(Values, '/api/*')]].RuleArn" \
+            --output text)
+
+          CURRENT_TG_ARN=$(aws elbv2 describe-rules \
+            --rule-arns ${API_RULE_ARN} \
+            --query 'Rules[0].Actions[0].ForwardConfig.TargetGroups[0].TargetGroupArn' \
             --output text)
 
           if [ "$CURRENT_TG" != "$BLUE_TG_ARN" ]; then
